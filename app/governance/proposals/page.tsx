@@ -399,7 +399,7 @@ const AllProposals: React.FC = () => {
                         </span>
                         {proposal.voteNoWithVeto !== "0.0%" && (
                           <span className={styles["vote-no-veto-text"]}>
-                            No With Veto: {proposal.voteNoWithVeto} (
+                            No With Vote: {proposal.voteNoWithVeto} (
                             {proposal.voteNoWithVetoPercent})
                           </span>
                         )}
