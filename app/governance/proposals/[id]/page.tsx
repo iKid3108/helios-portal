@@ -1,10 +1,10 @@
 import BackSection from "@/components/back"
-import { VoteResults } from "@/components/voteresults"
+import { VoteResult, VoteResults } from "@/components/voteresults"
 import { request } from "@/helpers/request"
+import { truncateAddress } from "@/lib/utils"
 import { notFound } from "next/navigation"
-import styles from "./proposal.module.scss"
-import { VoteResult } from "@/components/voteresults"
 import { VotingSection } from "../../(components)/voting-section"
+import styles from "./proposal.module.scss"
 
 interface TallyResult {
   yes_count: string
@@ -104,8 +104,8 @@ export default async function ProposalDetail({
               </div>
 
               <div className={styles.meta}>
-                <p>
-                  <strong>Proposer:</strong>{" "}
+                <p className={styles.displayFlex}>
+                  <strong>Voting Proposer:</strong>{" "}
                   <a
                     href={`https://explorer.helioschainlabs.org/address/${proposal.proposer}`}
                     target="_blank"
@@ -113,16 +113,32 @@ export default async function ProposalDetail({
                     className={styles.proposerLink}
                     title="View on Helios Explorer"
                   >
-                    {proposal.proposer}
+                    {truncateAddress(proposal.proposer)}
                   </a>
                 </p>
                 <p>
                   <strong>Voting Start:</strong>{" "}
-                  {new Date(proposal.votingStartTime).toLocaleString()}
+                  {new Date(proposal.votingStartTime).toLocaleString("en-US", {
+                    year: "numeric",
+                    month: "2-digit",
+                    day: "2-digit",
+                    hour: "numeric",
+                    minute: "2-digit",
+                    second: "2-digit",
+                    hour12: true
+                  })}
                 </p>
                 <p>
                   <strong>Voting End:</strong>{" "}
-                  {new Date(proposal.votingEndTime).toLocaleString()}
+                  {new Date(proposal.votingEndTime).toLocaleString("en-US", {
+                    year: "numeric",
+                    month: "2-digit",
+                    day: "2-digit",
+                    hour: "numeric",
+                    minute: "2-digit",
+                    second: "2-digit",
+                    hour12: true
+                  })}
                 </p>
               </div>
 
@@ -146,7 +162,14 @@ export default async function ProposalDetail({
               againstVotes={againstVotes}
               quorum={quorum}
               status={proposal.status as "EXECUTED" | "DEFEATED"}
-              endDate={new Date(proposal.votingEndTime).toLocaleDateString()}
+              endDate={new Date(proposal.votingEndTime).toLocaleDateString(
+                "en-US",
+                {
+                  year: "numeric",
+                  month: "2-digit",
+                  day: "2-digit"
+                }
+              )}
               voters={Voters}
             />
           </div>

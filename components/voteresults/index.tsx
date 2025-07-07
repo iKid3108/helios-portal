@@ -73,7 +73,7 @@ export function VoteResults({
         >
           <span>{status}</span>
           <span className={styles.separator}>·</span>
-          <span className={styles.endDate}>Ended {endDate}</span>
+          <span className={styles.endDate}>End {endDate}</span>
         </div>
 
         <div className={styles.votersSection}>

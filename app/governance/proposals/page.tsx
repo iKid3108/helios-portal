@@ -3,6 +3,7 @@
 import BackSection from "@/components/back"
 import { Heading } from "@/components/heading"
 import { request } from "@/helpers/request"
+import { truncateAddress } from "@/lib/utils"
 import { useRouter } from "next/navigation"
 import React, { useEffect, useState } from "react"
 import { useAccount } from "wagmi"
@@ -129,7 +130,18 @@ const AllProposals: React.FC = () => {
         return {
           id: item.id.toString(),
           meta: `By ${item.proposer}`,
-          status: `Ends ${new Date(item.votingEndTime).toLocaleString()}`,
+          status: `Ends: ${new Date(item.votingEndTime).toLocaleString(
+            "en-US",
+            {
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+              hour: "numeric",
+              minute: "2-digit",
+              second: "2-digit",
+              hour12: true
+            }
+          )}`,
           votes: `${yesFormatted} For – ${noFormatted} Against – ${abstainFormatted} Abstain – ${noWithVetoFormatted} No with Vote`,
           title: item.title,
           result: item.status,
@@ -449,23 +461,21 @@ const AllProposals: React.FC = () => {
                         <span className={styles["proposer-label"]}>
                           Proposal by
                         </span>
-                        <div className={styles["proposer-badge"]}>
-                          {
-                            <a
-                              href={`https://explorer.helioschainlabs.org/address/${proposal.meta.replace(
-                                "By ",
-                                ""
-                              )}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className={styles.proposerLink}
-                              title="View on Helios Explorer"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              {proposal.meta.replace("By ", "")}
-                            </a>
-                          }
-                        </div>
+                        <a
+                          href={`https://explorer.helioschainlabs.org/address/${proposal.meta.replace(
+                            "By ",
+                            ""
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={styles.proposerLink}
+                          title="View on Helios Explorer"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <span>
+                            {truncateAddress(proposal.meta.replace("By ", ""))}
+                          </span>
+                        </a>
                       </div>
                       <h3 className={styles["proposal-title"]}>
                         {proposal.title}

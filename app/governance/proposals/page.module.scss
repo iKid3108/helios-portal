@@ -553,36 +553,27 @@
   }
 }
 
-// Proposal List SCSS
 .proposal-list {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 1rem;
 }
 
 .proposal-card {
-  background-color: #fafbfe;
-  border: 1px solid #e1e5e9;
-  border-radius: 0.75rem;
-  color: rgba(0, 0, 0, 0.9);
+  background-color: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
 
   &:hover {
-    background-color: #f1f5f9;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
-      0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    background-color: #f9fafb;
   }
 }
 
 .card-content {
-  padding: 1rem;
-
-  @media (min-width: 640px) {
-    padding: 1.5rem;
-  }
+  padding: 1.5rem;
 }
 
 .proposal-header {
@@ -614,23 +605,46 @@
 
 .proposer-label {
   font-size: 0.875rem;
-  color: #9ca3af;
+  color: #6b7280;
 }
 
-.proposer-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.125rem 0.625rem;
-  background-color: #131926;
-  border: 1px solid #374151;
-  border-radius: 0.375rem;
-  font-size: 0.75rem;
+.proposerLink {
+  color: #007bff;
+  text-decoration: none;
   font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
-  color: #d1d5db;
-  transition: background-color 0.2s ease;
+  font-size: 0.9rem;
+  background-color: #f8f9fa;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid #e9ecef;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 
   &:hover {
-    background-color: #1f2937;
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+    text-decoration: none;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.2);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  // Add external link icon
+  &::after {
+    content: "↗";
+    font-size: 0.75rem;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+  }
+
+  &:hover::after {
+    opacity: 1;
   }
 }
 
@@ -816,7 +830,7 @@
     gap: 0.75rem;
   }
 }
-/* Error state styles */
+
 .error-state {
   text-align: center;
   padding: 2rem;
@@ -855,7 +869,6 @@
   cursor: not-allowed;
 }
 
-/* Error banner for when there's existing data */
 .error-banner {
   background: #fef2f2;
   border: 1px solid #fecaca;
@@ -950,4 +963,12 @@
   margin-left: 15px;
   font-size: 14px;
   color: #666;
+}
+
+@media (max-width: 768px) {
+  .proposerLink {
+    font-size: 0.8rem;
+    padding: 1px 4px;
+    word-break: break-all;
+  }
 }
