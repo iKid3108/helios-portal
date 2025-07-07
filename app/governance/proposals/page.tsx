@@ -3,7 +3,7 @@
 import BackSection from "@/components/back"
 import { Heading } from "@/components/heading"
 import { useRouter } from "next/navigation"
-import React, { useCallback, useEffect, useState } from "react"
+import React, { useEffect, useState } from "react"
 import { useAccount } from "wagmi"
 import { ModalProposal } from "../(components)/proposal/modal"
 import styles from "./page.module.scss"
@@ -52,7 +52,6 @@ const AllProposals: React.FC = () => {
   const [pageSize] = useState(10)
   const [totalPages, setTotalPages] = useState<number | null>(null) // null means unknown
   const [hasNextPage, setHasNextPage] = useState(true)
-  const [knownPages, setKnownPages] = useState<Set<number>>(new Set()) // Track which pages we know exist
   const { isConnected } = useAccount()
   const [isLoading, setIsLoading] = useState(false)
   const [showModal, setShowModal] = useState(false)
@@ -97,9 +96,6 @@ const AllProposals: React.FC = () => {
         }
         return
       }
-
-      // Add this page to known pages
-      setKnownPages((prev) => new Set([...prev, page]))
 
       // Update hasNextPage based on returned data length
       const isLastPage = rawData.length < pageSize
@@ -217,7 +213,7 @@ const AllProposals: React.FC = () => {
           1,
           currentPage - Math.floor(maxVisiblePages / 2)
         )
-        let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1)
+        const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1)
 
         // Adjust start if we're near the end
         if (endPage - startPage + 1 < maxVisiblePages) {
