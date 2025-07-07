@@ -560,6 +560,7 @@
 }
 
 .proposal-card {
+  transition: all 0.3s ease-in-out;
   background-color: white;
   border: 1px solid #e5e7eb;
   border-radius: 1rem;
@@ -567,11 +568,9 @@
   cursor: pointer;
 
   &:hover {
+    transform: translateY(-3px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    background-color: #f9fafb;
-    .vote-section {
-      background-color: rgb(226 232 240 / var(--tw-bg-opacity, 1));
-    }
+    border-color: #1552e6;
   }
 }
 
@@ -668,14 +667,15 @@
 
 .proposal-status {
   display: flex;
-  align-items: center;
+  align-items: end;
   gap: 0.5rem;
+  flex-direction: column;
   text-align: right;
 
-  @media (min-width: 640px) {
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 0.25rem;
+  @media (max-width: 640px) {
+    display: block;
+    // align-items: flex-end;
+    // gap: 0.25rem;
   }
 }
 
