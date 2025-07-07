@@ -1,10 +1,9 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { useAccount } from "wagmi"
-import { useState } from "react"
-import { useWeb3Provider } from "./useWeb3Provider"
-import { ethers } from "ethers"
-import { getErrorMessage } from "@/utils/string"
 import { Feedback } from "@/types/feedback"
+import { getErrorMessage } from "@/utils/string"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useState } from "react"
+import { useAccount } from "wagmi"
+import { useWeb3Provider } from "./useWeb3Provider"
 
 const voteAbi = [
   {

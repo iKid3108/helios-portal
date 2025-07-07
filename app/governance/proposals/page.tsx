@@ -2,12 +2,12 @@
 
 import BackSection from "@/components/back"
 import { Heading } from "@/components/heading"
+import { request } from "@/helpers/request"
 import { useRouter } from "next/navigation"
 import React, { useEffect, useState } from "react"
 import { useAccount } from "wagmi"
 import { ModalProposal } from "../(components)/proposal/modal"
 import styles from "./page.module.scss"
-import { request } from "@/helpers/request"
 
 // Updated fetchProposals function using the new request utility
 const fetchProposals = async (page: number, pageSize: number) => {
@@ -63,7 +63,7 @@ const AllProposals: React.FC = () => {
     setTimeout(() => {
       setIsLoading(false)
       setShowModal(true)
-    }, 1000)
+    }, 200)
   }
 
   const loadProposals = async (page: number) => {

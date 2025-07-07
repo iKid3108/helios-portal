@@ -27,3 +27,11 @@
 .message {
   text-align: left;
 }
+
+.weightChangeGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-4);
+  margin-top: var(--size-4);
+  text-align: left;
+}

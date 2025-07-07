@@ -1,8 +1,11 @@
+"use client"
+
 import { Button } from "@/components/button"
 import { Input } from "@/components/input/input"
 import { Select } from "@/components/input/select"
 import { Message } from "@/components/message"
 import { Modal } from "@/components/modal"
+import { useState } from "react"
 import { toast } from "sonner"
 import s from "./proposal.module.scss"
 
@@ -12,10 +15,14 @@ interface ModalProposalProps {
 }
 
 export const ModalProposal = ({ open, onClose }: ModalProposalProps) => {
+  const [proposalType, setProposalType] = useState<string>("")
+
   const handleSubmit = () => {
     toast.success("Proposal submitted successfully")
     onClose()
   }
+
+  const showWeightChangeInputs = proposalType === "asset-weight-change"
 
   return (
     <Modal
@@ -33,6 +40,8 @@ export const ModalProposal = ({ open, onClose }: ModalProposalProps) => {
       <Select
         icon="hugeicons:list-setting"
         label="Proposal Type"
+        value={proposalType}
+        onChange={(e) => setProposalType(e.target.value)}
         options={[
           { value: "parameter-change", label: "Parameter Change" },
           { value: "asset-addition", label: "Asset Addition" },
@@ -47,6 +56,35 @@ export const ModalProposal = ({ open, onClose }: ModalProposalProps) => {
         label="Proposal Description"
         placeholder="Provide a detailed description of your proposal including rationale and expected impact."
       />
+
+      {showWeightChangeInputs && (
+        <div className={s.weightChangeGroup}>
+          <Input
+            icon="ph:currency-circle-dollar"
+            label="Denom"
+            placeholder="Enter token denom (e.g., ETH, BNB, USDT)"
+          />
+
+          <Select
+            icon="mdi:arrow-expand-vertical"
+            label="Magnitude"
+            options={[
+              { value: "SMALL", label: "SMALL" },
+              { value: "MEDIUM", label: "MEDIUM" },
+              { value: "HIGH", label: "HIGH" }
+            ]}
+          />
+          <Select
+            icon="mdi:arrow-up-down"
+            label="Direction"
+            options={[
+              { value: "UP", label: "UP" },
+              { value: "DOWN", label: "DOWN" }
+            ]}
+          />
+        </div>
+      )}
+
       <Input
         icon="helios"
         label="Initial Deposit (HLS)"
