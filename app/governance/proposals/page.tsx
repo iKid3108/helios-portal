@@ -2,6 +2,7 @@
 
 import BackSection from "@/components/back"
 import { Heading } from "@/components/heading"
+import { Icon } from "@/components/icon"
 import { request } from "@/helpers/request"
 import { truncateAddress } from "@/lib/utils"
 import { useRouter } from "next/navigation"
@@ -458,6 +459,7 @@ const AllProposals: React.FC = () => {
                   <div className={styles["proposal-header"]}>
                     <div className={styles["proposal-info"]}>
                       <div className={styles["proposer-info"]}>
+                        <Icon icon="material-symbols:person" />
                         <span className={styles["proposer-label"]}>
                           Proposal by
                         </span>
@@ -468,13 +470,26 @@ const AllProposals: React.FC = () => {
                           )}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className={styles.proposerLink}
+                          className={styles.proposerLink_mobile}
                           title="View on Helios Explorer"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <span>
                             {truncateAddress(proposal.meta.replace("By ", ""))}
                           </span>
+                        </a>
+                        <a
+                          href={`https://explorer.helioschainlabs.org/address/${proposal.meta.replace(
+                            "By ",
+                            ""
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={styles.proposerLink_full}
+                          title="View on Helios Explorer"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <span>{proposal.meta.replace("By ", "")}</span>
                         </a>
                       </div>
                       <h3 className={styles["proposal-title"]}>
@@ -483,17 +498,34 @@ const AllProposals: React.FC = () => {
                     </div>
                     <div className={styles["proposal-status"]}>
                       <div className={styles["end-date"]}>
+                        <Icon icon="material-symbols:event" />
+                        &nbsp;
                         {proposal.status}
                       </div>
                       <div
                         className={`${styles["status-badge"]} ${proposal.resultClass}`}
                       >
-                        {proposal.result}
+                        <Icon
+                          icon={
+                            proposal.result === "PASSED"
+                              ? "material-symbols:check-circle"
+                              : proposal.result === "REJECTED"
+                              ? "material-symbols:cancel"
+                              : "material-symbols:how-to-vote"
+                          }
+                        />
+                        &nbsp; {proposal.result}
                       </div>
                     </div>
                   </div>
 
                   <div className={styles["vote-section"]}>
+                    <span>Voting Results</span>
+                    <div className={styles.captionContainer}>
+                      <span className={styles.captionVotes}>
+                        Total votes cast
+                      </span>
+                    </div>
                     <div className={styles["vote-bar"]}>
                       <div
                         className={styles["vote-for"]}
@@ -516,20 +548,32 @@ const AllProposals: React.FC = () => {
                     <div className={styles["vote-details"]}>
                       <div className={styles["vote-stats"]}>
                         <span className={styles["vote-for-text"]}>
-                          For: {proposal.voteFor} ({proposal.voteForPercent})
+                          <Icon icon="material-symbols:thumb-up" />
+                          <span>
+                            For: {proposal.voteFor} ({proposal.voteForPercent})
+                          </span>
                         </span>
                         <span className={styles["vote-abstain-text"]}>
-                          Abstain: {proposal.voteAbstain} (
-                          {proposal.voteAbstainPercent})
+                          <Icon icon="material-symbols:panorama-fish-eye" />
+                          <span>
+                            Abstain: {proposal.voteAbstain} (
+                            {proposal.voteAbstainPercent})
+                          </span>
                         </span>
                         <span className={styles["vote-against-text"]}>
-                          Against: {proposal.voteAgainst} (
-                          {proposal.voteAgainstPercent})
+                          <Icon icon="material-symbols:thumb-down" />
+                          <span>
+                            Against: {proposal.voteAgainst} (
+                            {proposal.voteAgainstPercent})
+                          </span>
                         </span>
                         {proposal.voteNoWithVeto !== "0HLS" && (
                           <span className={styles["vote-no-veto-text"]}>
-                            No With Vote: {proposal.voteNoWithVeto} (
-                            {proposal.voteNoWithVetoPercent})
+                            <Icon icon="material-symbols:do-not-disturb-on" />
+                            <span>
+                              No With Vote: {proposal.voteNoWithVeto} (
+                              {proposal.voteNoWithVetoPercent})
+                            </span>
                           </span>
                         )}
                       </div>
