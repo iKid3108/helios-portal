@@ -3,7 +3,7 @@
 import BackSection from "@/components/back"
 import { Heading } from "@/components/heading"
 import { useRouter } from "next/navigation"
-import React, { useCallback, useEffect, useRef, useState } from "react"
+import React, { useCallback, useEffect, useState } from "react"
 import { useAccount } from "wagmi"
 import { ModalProposal } from "../(components)/proposal/modal"
 import styles from "./page.module.scss"
@@ -25,6 +25,7 @@ const fetchProposals = async (page: number, pageSize: number) => {
     throw new Error("Failed to fetch proposals")
   }
 }
+
 interface ProposalData {
   id: string
   meta: string
@@ -47,16 +48,16 @@ const AllProposals: React.FC = () => {
   const router = useRouter()
   const [proposals, setProposals] = useState<ProposalData[]>([])
   const [loading, setLoading] = useState(false)
-  const pageRef = useRef(1)
-  const loaderRef = useRef<HTMLDivElement | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize] = useState(10)
+  const [totalPages, setTotalPages] = useState<number | null>(null) // null means unknown
+  const [hasNextPage, setHasNextPage] = useState(true)
+  const [knownPages, setKnownPages] = useState<Set<number>>(new Set()) // Track which pages we know exist
   const { isConnected } = useAccount()
   const [isLoading, setIsLoading] = useState(false)
   const [showModal, setShowModal] = useState(false)
-  const [hasLoadedInitial, setHasLoadedInitial] = useState(false) // Track if we've made the first load attempt
+  const [hasLoadedInitial, setHasLoadedInitial] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  // Add this ref at the top of your component
-  const loadingRef = useRef(false)
-  const [savedRowDataLength, setSavedRowDataLength] = useState(10)
 
   const handleCreateProposal = () => {
     setIsLoading(true)
@@ -66,32 +67,48 @@ const AllProposals: React.FC = () => {
     }, 1000)
   }
 
-  const loadMoreProposals = async () => {
-    // Prevent multiple simultaneous calls
+  const loadProposals = async (page: number) => {
     if (loading) return
-    if (loadingRef.current) return
-    if (savedRowDataLength == 0) return
 
-    loadingRef.current = true
     setLoading(true)
-    setError(null) // Clear previous errors
-    console.log("Fetched proposals:", pageRef.current)
+    setError(null)
+    console.log("Fetching proposals for page:", page)
 
     try {
-      const rawData = await fetchProposals(pageRef.current, 10)
+      const rawData = await fetchProposals(page, pageSize)
 
-      setHasLoadedInitial(true) // Mark that we've attempted the first load
+      setHasLoadedInitial(true)
 
       if (!rawData || rawData.length === 0) {
-        setSavedRowDataLength(0)
-        console.log("No more proposals to load")
-        // Add a manual proposal immediately when API data is exhausted
-        // const newManualProposal = createManualProposals(3)
-        // setProposals((prev) => [...prev, ...newManualProposal])
-        setLoading(false) // Make sure to set loading to false
+        // We've reached the end - set total pages to the previous page
+        const actualTotalPages = Math.max(1, page - 1)
+        setTotalPages(actualTotalPages)
+        setHasNextPage(false)
+
+        // If we're on page 1 and get no results, show empty state
+        if (page === 1) {
+          setProposals([])
+        } else {
+          // If we're on a page beyond the total, redirect to last valid page
+          setCurrentPage(actualTotalPages)
+          if (actualTotalPages > 0) {
+            loadProposals(actualTotalPages)
+          }
+        }
         return
       }
-      setSavedRowDataLength(rawData.length)
+
+      // Add this page to known pages
+      setKnownPages((prev) => new Set([...prev, page]))
+
+      // Update hasNextPage based on returned data length
+      const isLastPage = rawData.length < pageSize
+      setHasNextPage(!isLastPage)
+
+      // If this page has fewer items than pageSize, we know this is the last page
+      if (isLastPage) {
+        setTotalPages(page)
+      }
 
       const newProposals: ProposalData[] = rawData.map((item: any) => {
         const yes = BigInt(item.currentTallyResult?.yes_count || "0")
@@ -102,7 +119,6 @@ const AllProposals: React.FC = () => {
         )
 
         const total = yes + no + abstain + noWithVeto || 1n
-        console.log("yyyyyyyyyyyyyyy", yes, (yes / 10n ** 18n).toString())
         const voteForPercent = Number((yes * 100n) / total)
         const voteAgainstPercent = Number((no * 100n) / total)
         const voteAbstainPercent = Number((abstain * 100n) / total)
@@ -138,52 +154,159 @@ const AllProposals: React.FC = () => {
         }
       })
 
-      setProposals((prev) => [...prev, ...newProposals])
-      pageRef.current += 1
+      setProposals(newProposals)
     } catch (error: unknown) {
       console.error("Failed to fetch proposals", error)
       const message =
         error instanceof Error ? error.message : "Failed to load proposals"
       setError(message)
     } finally {
-      loadingRef.current = false
       setLoading(false)
     }
   }
 
-  // Use useCallback to memoize the function and prevent unnecessary re-renders
-  const loadMoreProposalsCallback = useCallback(loadMoreProposals, [
-    loading,
-    savedRowDataLength
-  ])
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    if (page < 1 || page === currentPage || loading) return
+    setCurrentPage(page)
+    loadProposals(page)
+  }
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !loading) {
-          loadMoreProposalsCallback()
-        }
-      },
-      {
-        threshold: 0.1, // Changed from 1 to 0.1 for better triggering
-        rootMargin: "20px" // Add some margin to trigger earlier
-      }
-    )
-
-    const current = loaderRef.current
-    if (current) observer.observe(current)
-
-    return () => {
-      if (current) observer.unobserve(current)
+  // Handle previous page
+  const handlePrevious = () => {
+    if (currentPage > 1) {
+      handlePageChange(currentPage - 1)
     }
-  }, [loadMoreProposalsCallback, savedRowDataLength, loading]) // Add dependencies
+  }
+
+  // Handle next page
+  const handleNext = () => {
+    if (hasNextPage) {
+      handlePageChange(currentPage + 1)
+    }
+  }
 
   // Initial load effect
   useEffect(() => {
-    if (!hasLoadedInitial && !loading) {
-      loadMoreProposals()
+    if (!hasLoadedInitial) {
+      loadProposals(1)
     }
-  }, []) // This runs once on mount
+  }, [])
+
+  // Pagination component
+  const Pagination = () => {
+    const getPageNumbers = () => {
+      const pages = []
+      const maxVisiblePages = 5
+
+      if (totalPages === null) {
+        // We don't know total pages yet, show conservative pagination
+        // Only show current page and next page button (handled by hasNextPage)
+        pages.push(currentPage)
+
+        // Add previous page if it exists
+        if (currentPage > 1) {
+          pages.unshift(currentPage - 1)
+        }
+
+        // Add next page if we think it might exist (but don't show the button yet)
+        // The Next button will handle this
+      } else {
+        // We know the total, show normal pagination
+        let startPage = Math.max(
+          1,
+          currentPage - Math.floor(maxVisiblePages / 2)
+        )
+        let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1)
+
+        // Adjust start if we're near the end
+        if (endPage - startPage + 1 < maxVisiblePages) {
+          startPage = Math.max(1, endPage - maxVisiblePages + 1)
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
+          pages.push(i)
+        }
+      }
+
+      return pages
+    }
+
+    return (
+      <div className={styles["pagination"]}>
+        <button
+          className={`${styles["pagination-btn"]} ${
+            currentPage === 1 ? styles.disabled : ""
+          }`}
+          onClick={handlePrevious}
+          disabled={currentPage === 1 || loading}
+        >
+          Previous
+        </button>
+
+        <div className={styles["page-numbers"]}>
+          {totalPages !== null && currentPage > 3 && (
+            <>
+              <button
+                className={styles["page-btn"]}
+                onClick={() => handlePageChange(1)}
+                disabled={loading}
+              >
+                1
+              </button>
+              {currentPage > 4 && (
+                <span className={styles["ellipsis"]}>...</span>
+              )}
+            </>
+          )}
+
+          {getPageNumbers().map((page) => (
+            <button
+              key={page}
+              className={`${styles["page-btn"]} ${
+                page === currentPage ? styles.active : ""
+              }`}
+              onClick={() => handlePageChange(page)}
+              disabled={loading}
+            >
+              {page}
+            </button>
+          ))}
+
+          {totalPages !== null && currentPage < totalPages - 2 && (
+            <>
+              {currentPage < totalPages - 3 && (
+                <span className={styles["ellipsis"]}>...</span>
+              )}
+              <button
+                className={styles["page-btn"]}
+                onClick={() => handlePageChange(totalPages)}
+                disabled={loading}
+              >
+                {totalPages}
+              </button>
+            </>
+          )}
+        </div>
+
+        <button
+          className={`${styles["pagination-btn"]} ${
+            !hasNextPage ? styles.disabled : ""
+          }`}
+          onClick={handleNext}
+          disabled={!hasNextPage || loading}
+        >
+          Next
+        </button>
+
+        {totalPages !== null && (
+          <div className={styles["page-info"]}>
+            Page {currentPage} of {totalPages}
+          </div>
+        )}
+      </div>
+    )
+  }
 
   // Show loading state on initial load
   if (!hasLoadedInitial && loading) {
@@ -252,7 +375,7 @@ const AllProposals: React.FC = () => {
             <p>{error}</p>
             <button
               className={styles["retry-button"]}
-              onClick={() => loadMoreProposals()}
+              onClick={() => loadProposals(currentPage)}
               disabled={loading}
             >
               {loading ? "Retrying..." : "Try Again"}
@@ -295,7 +418,7 @@ const AllProposals: React.FC = () => {
             <p>{error}</p>
             <button
               className={styles["retry-button-small"]}
-              onClick={() => loadMoreProposals()}
+              onClick={() => loadProposals(currentPage)}
               disabled={loading}
             >
               Retry
@@ -397,7 +520,7 @@ const AllProposals: React.FC = () => {
                           Against: {proposal.voteAgainst} (
                           {proposal.voteAgainstPercent})
                         </span>
-                        {proposal.voteNoWithVeto !== "0.0%" && (
+                        {proposal.voteNoWithVeto !== "0HLS" && (
                           <span className={styles["vote-no-veto-text"]}>
                             No With Vote: {proposal.voteNoWithVeto} (
                             {proposal.voteNoWithVetoPercent})
@@ -410,12 +533,17 @@ const AllProposals: React.FC = () => {
               </div>
             ))
           )}
-          <div ref={loaderRef} className={`${styles.loader}`}>
-            {loading && proposals.length > 0 && (
-              <p>Loading more proposals...</p>
-            )}
-          </div>
+
+          {/* Loading indicator for page changes */}
+          {loading && hasLoadedInitial && (
+            <div className={styles.loader}>
+              <p>Loading proposals...</p>
+            </div>
+          )}
         </div>
+
+        {/* Pagination Controls */}
+        {hasLoadedInitial && !loading && proposals.length > 0 && <Pagination />}
       </div>
       <ModalProposal open={showModal} onClose={() => setShowModal(false)} />
     </>
@@ -423,12 +551,9 @@ const AllProposals: React.FC = () => {
 }
 
 const ProposalDashboard: React.FC = () => {
-  const { isConnected } = useAccount() // eslint-disable-line @typescript-eslint/no-unused-vars
-
   return (
     <div className={styles.dashboard}>
       <BackSection isVisible={false} />
-      {/* {isConnected && <MyProposals />} */}
       <AllProposals />
     </div>
   )

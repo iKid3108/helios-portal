@@ -892,3 +892,62 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+  padding: 20px 0;
+}
+
+.pagination-btn {
+  padding: 8px 16px;
+  border: 1px solid #ddd;
+  background: white;
+  cursor: pointer;
+  border-radius: 4px;
+
+  &:hover:not(.disabled) {
+    background: #f5f5f5;
+  }
+
+  &.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.page-numbers {
+  display: flex;
+  gap: 5px;
+}
+
+.page-btn {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  background: white;
+  cursor: pointer;
+  border-radius: 4px;
+
+  &:hover {
+    background: #f5f5f5;
+  }
+
+  &.active {
+    background: #007bff;
+    color: white;
+    border-color: #007bff;
+  }
+}
+.ellipsis {
+  padding: 8px 4px;
+  color: #666;
+}
+
+.page-info {
+  margin-left: 15px;
+  font-size: 14px;
+  color: #666;
+}
