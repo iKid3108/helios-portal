@@ -68,6 +68,41 @@ const AllProposals: React.FC = () => {
     }, 200)
   }
 
+  // Function to discover total pages by fetching until we get empty results
+  const discoverTotalPages = async () => {
+    let page = 1
+    let totalFound = 0
+
+    try {
+      while (true) {
+        const data = await fetchProposals(page, pageSize)
+
+        if (!data || data.length === 0) {
+          // No data on this page, so previous page was the last
+          totalFound = Math.max(0, page - 1)
+          break
+        }
+
+        if (data.length < pageSize) {
+          // This page has data but less than pageSize, so it's the last page
+          totalFound = page
+          break
+        }
+
+        // This page is full, continue to next page
+        page++
+      }
+    } catch (error) {
+      console.error("Error discovering total pages:", error)
+      // If there's an error, assume at least 1 page exists
+      totalFound = 1
+    }
+
+    setTotalPages(totalFound)
+    setHasNextPage(totalFound > 1)
+    return totalFound
+  }
+
   const loadProposals = async (page: number) => {
     if (loading) return
 
@@ -83,7 +118,6 @@ const AllProposals: React.FC = () => {
       if (!rawData || rawData.length === 0) {
         // We've reached the end - set total pages to the previous page
         const actualTotalPages = Math.max(1, page - 1)
-        setTotalPages(actualTotalPages)
         setHasNextPage(false)
 
         // If we're on page 1 and get no results, show empty state
@@ -102,11 +136,6 @@ const AllProposals: React.FC = () => {
       // Update hasNextPage based on returned data length
       const isLastPage = rawData.length < pageSize
       setHasNextPage(!isLastPage)
-
-      // If this page has fewer items than pageSize, we know this is the last page
-      if (isLastPage) {
-        setTotalPages(page)
-      }
 
       const newProposals: ProposalData[] = rawData.map((item: any) => {
         const yes = BigInt(item.currentTallyResult?.yes_count || "0")
@@ -198,7 +227,9 @@ const AllProposals: React.FC = () => {
   // Initial load effect
   useEffect(() => {
     if (!hasLoadedInitial) {
-      loadProposals(1)
+      discoverTotalPages().then(() => {
+        loadProposals(1)
+      })
     }
   }, [])
 
