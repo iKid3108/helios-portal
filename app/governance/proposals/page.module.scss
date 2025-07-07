@@ -184,7 +184,6 @@
   }
 
   .create-proposal {
-    margin-top: 1rem;
     width: 100%;
     justify-content: center;
   }
@@ -371,6 +370,7 @@
   font-weight: 700;
   margin-bottom: 1rem;
   width: fit-content !important;
+  flex-direction: row !important;
 }
 
 .card {
