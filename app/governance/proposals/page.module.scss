@@ -49,6 +49,13 @@
   animation: spin 1s linear infinite;
   margin-right: 10px;
 }
+
+.total-count .myloader {
+  width: 16px;
+  height: 16px;
+  border-width: 2px;
+  margin-right: 8px;
+}
 // Hide when loading is false
 .hidden {
   display: none;
@@ -940,6 +947,56 @@
 .retry-button-small:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.proposal-stats {
+  padding: 0.25rem 0.5rem;
+  backdrop-filter: blur(10px);
+}
+
+.stats-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.total-count {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #111827;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.total-count::before {
+  content: "📊";
+  font-size: 1rem;
+}
+
+.stats-info .page-info {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+}
+
+@media (max-width: 640px) {
+  .stats-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .stats-info .page-info {
+    align-self: stretch;
+    justify-content: center;
+  }
 }
 
 .pagination {

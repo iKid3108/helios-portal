@@ -54,6 +54,7 @@ const AllProposals: React.FC = () => {
   const [pageSize] = useState(10)
   const [totalPages, setTotalPages] = useState<number | null>(null) // null means unknown
   const [hasNextPage, setHasNextPage] = useState(true)
+  const [totalProposals, setTotalProposals] = useState<number | null>(null) // null means unknown
   const { isConnected } = useAccount()
   const [isLoading, setIsLoading] = useState(false)
   const [showModal, setShowModal] = useState(false)
@@ -72,6 +73,7 @@ const AllProposals: React.FC = () => {
   const discoverTotalPages = async () => {
     let page = 1
     let totalFound = 0
+    let totalProposalCount = 0
 
     try {
       while (true) {
@@ -82,6 +84,9 @@ const AllProposals: React.FC = () => {
           totalFound = Math.max(0, page - 1)
           break
         }
+
+        // Add the count from this page
+        totalProposalCount += data.length
 
         if (data.length < pageSize) {
           // This page has data but less than pageSize, so it's the last page
@@ -96,11 +101,13 @@ const AllProposals: React.FC = () => {
       console.error("Error discovering total pages:", error)
       // If there's an error, assume at least 1 page exists
       totalFound = 1
+      totalProposalCount = 0 // Reset count on error
     }
 
     setTotalPages(totalFound)
+    setTotalProposals(totalProposalCount)
     setHasNextPage(totalFound > 1)
-    return totalFound
+    return { totalFound, totalProposalCount }
   }
 
   const loadProposals = async (page: number) => {
@@ -119,6 +126,7 @@ const AllProposals: React.FC = () => {
         // We've reached the end - set total pages to the previous page
         const actualTotalPages = Math.max(1, page - 1)
         setHasNextPage(false)
+        setTotalProposals(0) // No proposals found
 
         // If we're on page 1 and get no results, show empty state
         if (page === 1) {
@@ -136,6 +144,14 @@ const AllProposals: React.FC = () => {
       // Update hasNextPage based on returned data length
       const isLastPage = rawData.length < pageSize
       setHasNextPage(!isLastPage)
+
+      // Only update total proposals if we haven't discovered them yet
+      // The accurate count will come from discoverTotalPages
+      if (totalProposals === null && page === 1) {
+        // If this is the first page and we haven't discovered total yet,
+        // trigger the discovery process
+        discoverTotalPages()
+      }
 
       const newProposals: ProposalData[] = rawData.map((item: any) => {
         const yes = BigInt(item.currentTallyResult?.yes_count || "0")
@@ -228,6 +244,7 @@ const AllProposals: React.FC = () => {
   useEffect(() => {
     if (!hasLoadedInitial) {
       discoverTotalPages().then(() => {
+        // The state is already set in discoverTotalPages, just load the first page
         loadProposals(1)
       })
     }
@@ -338,12 +355,6 @@ const AllProposals: React.FC = () => {
         >
           Next
         </button>
-
-        {totalPages !== null && (
-          <div className={styles["page-info"]}>
-            Page {currentPage} of {totalPages}
-          </div>
-        )}
       </div>
     )
   }
@@ -465,6 +476,32 @@ const AllProposals: React.FC = () => {
             </button>
           </div>
         )}
+
+        {/* Proposal count and pagination info */}
+        {hasLoadedInitial &&
+          !loading &&
+          (proposals.length > 0 || totalProposals !== null) && (
+            <div className={styles["proposal-stats"]}>
+              <div className={styles["stats-info"]}>
+                {totalProposals !== null ? (
+                  <span className={styles["total-count"]}>
+                    {totalProposals} proposal{totalProposals !== 1 ? "s" : ""}{" "}
+                    total
+                  </span>
+                ) : (
+                  <span className={styles["total-count"]}>
+                    <span className={styles.myloader}></span>
+                    Calculating total proposals...
+                  </span>
+                )}
+                {totalPages !== null && (
+                  <span className={styles["page-info"]}>
+                    Page {currentPage} of {totalPages}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
 
         <div className={styles["proposal-list"]}>
           {proposals.length === 0 && hasLoadedInitial && !loading ? (
