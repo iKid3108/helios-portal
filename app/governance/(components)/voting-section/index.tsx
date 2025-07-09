@@ -5,6 +5,7 @@ import { useAccount } from "wagmi"
 import { useVote } from "@/hooks/useVote"
 import { toast } from "sonner"
 import styles from "./voting-section.module.scss"
+import { Icon } from "@/components/icon"
 
 interface VotingSectionProps {
   proposalId: number
@@ -80,19 +81,32 @@ export function VotingSection({
 
   return (
     <div className={styles.votingSection}>
-      <h3 className={styles.sectionTitle}>Cast Your Vote</h3>
-
+      <h3 className={styles.sectionTitle}>
+        <Icon icon="mdi:vote-outline" width={20} height={20} /> Cast Your Vote
+      </h3>
       {statusMessage && (
         <div className={styles.statusMessage}>
+          <Icon
+            icon="mdi:alert-circle-outline"
+            width={18}
+            height={18}
+            className={styles.statusIcon}
+          />
           <p>{statusMessage}</p>
         </div>
       )}
-
       {!isConnected ? (
         <div className={styles.walletPrompt}>
           <div className={styles.promptContent}>
-            <div className={styles.promptIcon}>🔗</div>
-            <h4 className={styles.promptTitle}>Connect Your Wallet</h4>
+            <h4 className={styles.promptTitle}>
+              <Icon
+                icon="mdi:wallet-outline"
+                width={24}
+                height={24}
+                className={styles.promptIcon}
+              />
+              Connect Your Wallet
+            </h4>
             <p className={styles.promptText}>
               Please connect your wallet using the button in the header to
               participate in governance voting.
@@ -102,15 +116,25 @@ export function VotingSection({
       ) : (
         <div className={styles.connectedWallet}>
           <div className={styles.walletInfo}>
-            <span className={styles.walletIndicator}>✅</span>
-            <span>Connected: </span>
+            <Icon
+              icon="mdi:wallet-outline"
+              width={18}
+              height={18}
+              className={styles.walletIndicator}
+            />
+            <span>Connected:</span>
             <span className={styles.address}>
               {address?.slice(0, 6)}...{address?.slice(-4)}
             </span>
           </div>
-
           {canVote && (
-            <div className={styles.voteForm}>
+            <form
+              className={styles.voteForm}
+              onSubmit={(e) => {
+                e.preventDefault()
+                submitVote()
+              }}
+            >
               <div className={styles.voteOptions}>
                 <label className={styles.voteOption}>
                   <input
@@ -122,11 +146,15 @@ export function VotingSection({
                     disabled={isLoading}
                   />
                   <span className={`${styles.optionLabel} ${styles.yes}`}>
-                    <span className={styles.optionIcon}>✅</span>
+                    <Icon
+                      icon="mdi:thumb-up-outline"
+                      width={18}
+                      height={18}
+                      className={styles.optionIcon}
+                    />{" "}
                     Vote Yes
                   </span>
                 </label>
-
                 <label className={styles.voteOption}>
                   <input
                     type="radio"
@@ -137,11 +165,15 @@ export function VotingSection({
                     disabled={isLoading}
                   />
                   <span className={`${styles.optionLabel} ${styles.no}`}>
-                    <span className={styles.optionIcon}>❌</span>
+                    <Icon
+                      icon="mdi:thumb-down-outline"
+                      width={18}
+                      height={18}
+                      className={styles.optionIcon}
+                    />{" "}
                     Vote No
                   </span>
                 </label>
-
                 <label className={styles.voteOption}>
                   <input
                     type="radio"
@@ -152,11 +184,15 @@ export function VotingSection({
                     disabled={isLoading}
                   />
                   <span className={`${styles.optionLabel} ${styles.abstain}`}>
-                    <span className={styles.optionIcon}>⚪</span>
+                    <Icon
+                      icon="mdi:minus-circle-outline"
+                      width={18}
+                      height={18}
+                      className={styles.optionIcon}
+                    />{" "}
                     Abstain
                   </span>
                 </label>
-
                 <label className={styles.voteOption}>
                   <input
                     type="radio"
@@ -167,12 +203,16 @@ export function VotingSection({
                     disabled={isLoading}
                   />
                   <span className={`${styles.optionLabel} ${styles.novote}`}>
-                    <span className={styles.optionIcon}>🚫</span>
-                    No with Vote
+                    <Icon
+                      icon="mdi:cancel"
+                      width={18}
+                      height={18}
+                      className={styles.optionIcon}
+                    />{" "}
+                    No with Veto
                   </span>
                 </label>
               </div>
-
               <div className={styles.metadataSection}>
                 <label htmlFor="voteMetadata" className={styles.metadataLabel}>
                   Vote Comment (Optional):
@@ -187,22 +227,22 @@ export function VotingSection({
                   disabled={isLoading}
                 />
               </div>
-
               <button
                 className={styles.submitVoteButton}
-                onClick={submitVote}
+                type="submit"
                 disabled={selectedVote === null || isLoading}
               >
                 {isLoading ? (
                   <span className={styles.loadingContent}>
-                    <span className={styles.spinner}></span>
-                    Submitting...
+                    <span className={styles.spinner}></span> Submitting...
                   </span>
                 ) : (
-                  "Submit Vote"
+                  <>
+                    <Icon icon="mdi:send" width={16} height={16} /> Submit Vote
+                  </>
                 )}
               </button>
-            </div>
+            </form>
           )}
         </div>
       )}

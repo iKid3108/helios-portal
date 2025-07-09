@@ -4,6 +4,8 @@ import { request } from "@/helpers/request"
 import { truncateAddress } from "@/lib/utils"
 import { notFound } from "next/navigation"
 import { VotingSection } from "../../(components)/voting-section"
+import { Icon } from "@/components/icon"
+import { Link } from "@/components/link"
 import styles from "./proposal.module.scss"
 
 interface TallyResult {
@@ -88,74 +90,108 @@ export default async function ProposalDetail({
       <BackSection isVisible={true} />
       <div className={styles.container}>
         <div className={styles.layout}>
-          {/* Left side - VoteResults Component */}
-
+          {/* Left side - Proposal Details */}
           <div className={styles.rightPanel}>
             <div className={styles.card}>
               <div className={styles.header}>
-                <h1 className={styles.title}>{proposal.title}</h1>
+                <div className={styles.headerTitle}>
+                  <Icon
+                    icon="mdi:file-document-outline"
+                    width={28}
+                    height={28}
+                    className={styles.headerIcon}
+                  />
+                  <h1 className={styles.title}>{proposal.title}</h1>
+                </div>
                 <span
-                  className={`${styles.status} ${
-                    styles[proposal.status.toLowerCase()] || ""
-                  }`}
+                  className={
+                    styles.statusBadge +
+                    " " +
+                    (styles[proposal.status.toLowerCase()] || "")
+                  }
                 >
+                  <Icon
+                    icon={
+                      proposal.status === "EXECUTED"
+                        ? "mdi:check-circle-outline"
+                        : proposal.status === "REJECTED"
+                        ? "mdi:close-circle-outline"
+                        : "mdi:clock-outline"
+                    }
+                    width={18}
+                    height={18}
+                  />
                   {proposal.status}
                 </span>
               </div>
-
-              <div className={styles.meta}>
-                <p className={styles.displayFlex}>
-                  <strong>Voting Proposer:</strong>{" "}
-                  <a
+              <div className={styles.metaGrid}>
+                <div className={styles.metaItem}>
+                  <Icon
+                    icon="mdi:account-circle-outline"
+                    width={18}
+                    height={18}
+                  />
+                  <span className={styles.metaLabel}>Proposer:</span>
+                  <Link
                     href={`https://explorer.helioschainlabs.org/address/${proposal.proposer}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
                     className={styles.proposerLink}
                     title="View on Helios Explorer"
                   >
                     {truncateAddress(proposal.proposer)}
-                  </a>
-                </p>
-                <p>
-                  <strong>Voting Start:</strong>{" "}
-                  {new Date(proposal.votingStartTime).toLocaleString("en-US", {
-                    year: "numeric",
-                    month: "2-digit",
-                    day: "2-digit",
-                    hour: "numeric",
-                    minute: "2-digit",
-                    second: "2-digit",
-                    hour12: true
-                  })}
-                </p>
-                <p>
-                  <strong>Voting End:</strong>{" "}
-                  {new Date(proposal.votingEndTime).toLocaleString("en-US", {
-                    year: "numeric",
-                    month: "2-digit",
-                    day: "2-digit",
-                    hour: "numeric",
-                    minute: "2-digit",
-                    second: "2-digit",
-                    hour12: true
-                  })}
-                </p>
+                  </Link>
+                </div>
+                <div className={styles.metaItem}>
+                  <Icon icon="mdi:calendar-start" width={18} height={18} />
+                  <span className={styles.metaLabel}>Start:</span>
+                  <span className={styles.metaValue}>
+                    {new Date(proposal.votingStartTime).toLocaleString(
+                      "en-US",
+                      {
+                        year: "numeric",
+                        month: "2-digit",
+                        day: "2-digit",
+                        hour: "numeric",
+                        minute: "2-digit",
+                        second: "2-digit",
+                        hour12: true
+                      }
+                    )}
+                  </span>
+                </div>
+                <div className={styles.metaItem}>
+                  <Icon icon="mdi:calendar-end" width={18} height={18} />
+                  <span className={styles.metaLabel}>End:</span>
+                  <span className={styles.metaValue}>
+                    {new Date(proposal.votingEndTime).toLocaleString("en-US", {
+                      year: "numeric",
+                      month: "2-digit",
+                      day: "2-digit",
+                      hour: "numeric",
+                      minute: "2-digit",
+                      second: "2-digit",
+                      hour12: true
+                    })}
+                  </span>
+                </div>
               </div>
-
               {/* Enhanced Voting Section */}
-              <VotingSection
-                proposalId={proposal.id}
-                status={proposal.status}
-                votingEndTime={proposal.votingEndTime}
-              />
-
+              <div className={styles.votingSectionWrapper}>
+                <VotingSection
+                  proposalId={proposal.id}
+                  status={proposal.status}
+                  votingEndTime={proposal.votingEndTime}
+                />
+              </div>
               <div className={styles.summary}>
-                <h2>Summary</h2>
+                <h2>
+                  <Icon icon="mdi:note-text-outline" width={20} height={20} />{" "}
+                  Summary
+                </h2>
                 <p>{proposal.summary}</p>
               </div>
             </div>
           </div>
-          {/* Right side - Proposal Details */}
+          {/* Right side - VoteResults Component */}
           <div className={styles.leftPanel}>
             <VoteResults
               forVotes={forVotes}

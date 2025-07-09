@@ -1,8 +1,8 @@
 "use client"
 
-import Image from "next/image"
 import { useAccount } from "wagmi"
 import styles from "./VoteResults.module.scss"
+import { Icon } from "@/components/icon"
 
 export interface VoteResult {
   voter: string
@@ -39,12 +39,19 @@ export function VoteResults({
 
   return (
     <div className={styles.card}>
-      <h2 className={styles.title}>Proposal votes</h2>
+      <h2 className={styles.title}>
+        <Icon icon="mdi:chart-bar" width={20} height={20} /> Proposal Votes
+      </h2>
 
       <div className={styles.content}>
         <div className={styles.voteHeader}>
-          <span className={styles.forVotes}>FOR {forVotes} HLS</span>
+          <span className={styles.forVotes}>
+            <Icon icon="mdi:thumb-up-outline" width={16} height={16} /> FOR{" "}
+            {forVotes} HLS
+          </span>
+          <div className={styles.voteDivider} />
           <span className={styles.againstVotes}>
+            <Icon icon="mdi:thumb-down-outline" width={16} height={16} />{" "}
             AGAINST {againstVotes} HLS
           </span>
         </div>
@@ -71,6 +78,15 @@ export function VoteResults({
         <div
           className={`${styles.statusBadge} ${styles[status.toLowerCase()]}`}
         >
+          <Icon
+            icon={
+              status === "EXECUTED"
+                ? "mdi:check-circle-outline"
+                : "mdi:close-circle-outline"
+            }
+            width={16}
+            height={16}
+          />
           <span>{status}</span>
           <span className={styles.separator}>·</span>
           <span className={styles.endDate}>End {endDate}</span>
@@ -87,9 +103,8 @@ export function VoteResults({
               <div key={voter.voter} className={styles.voterItem}>
                 <div className={styles.voterInfo}>
                   <div className={styles.avatar}>
-                    <Image
-                      src="/placeholder.svg"
-                      alt={voter.voter}
+                    <Icon
+                      icon="mdi:account-circle-outline"
                       width={24}
                       height={24}
                     />
@@ -102,6 +117,15 @@ export function VoteResults({
                         : styles.votedAgainst
                     }`}
                   >
+                    <Icon
+                      icon={
+                        voter.voteType === "voted for"
+                          ? "mdi:thumb-up-outline"
+                          : "mdi:thumb-down-outline"
+                      }
+                      width={14}
+                      height={14}
+                    />
                     {voter.voteType}
                   </span>
                 </div>
