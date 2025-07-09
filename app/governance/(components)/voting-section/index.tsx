@@ -1,11 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useAccount } from "wagmi"
-import { useVote } from "@/hooks/useVote"
-import { toast } from "sonner"
-import styles from "./voting-section.module.scss"
 import { Icon } from "@/components/icon"
+import { useVote } from "@/hooks/useVote"
+import { useEffect, useState } from "react"
+import { toast } from "sonner"
+import { useAccount } from "wagmi"
+import styles from "./voting-section.module.scss"
 
 interface VotingSectionProps {
   proposalId: number
@@ -123,7 +123,10 @@ export function VotingSection({
               className={styles.walletIndicator}
             />
             <span>Connected:</span>
-            <span className={styles.address}>
+            <span className={`${styles.address} ${styles.displayAddress1}`}>
+              {address}
+            </span>
+            <span className={`${styles.address} ${styles.displayAddress2}`}>
               {address?.slice(0, 6)}...{address?.slice(-4)}
             </span>
           </div>

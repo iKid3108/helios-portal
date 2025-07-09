@@ -298,6 +298,23 @@
       padding: 0.25rem 0.5rem;
       border-radius: 4px;
     }
+
+    .displayAddress1 {
+      display: flex;
+    }
+
+    .displayAddress2 {
+      display: none;
+    }
+
+    @media (max-width: 550px) {
+      .displayAddress1 {
+        display: none;
+      }
+      .displayAddress2 {
+        display: flex;
+      }
+    }
   }
 }
 
