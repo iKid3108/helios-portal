@@ -7,6 +7,7 @@ import ContextProvider from "@/context"
 import { headers } from "next/headers"
 import { NewsBanner } from "./(components)/news-banner"
 import Script from "next/script"
+import NetworkStatus from "@/components/network-status"
 
 export const metadata = MetadataSeo({
   title: "Your Gateway to Staking, Delegation & Cross-Chain Governance",
@@ -57,6 +58,7 @@ export default async function RootLayout({
         <NewsBanner />
         <ContextProvider cookies={cookies}>
           <Wrapper>{children}</Wrapper>
+          <NetworkStatus />
         </ContextProvider>
       </body>
     </html>
