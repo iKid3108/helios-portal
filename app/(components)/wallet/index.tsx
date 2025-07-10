@@ -48,39 +48,37 @@ export const Wallet = () => {
   }
 
   return (
-    <Dropdown
-      opener={
-        <Button
-          iconRight="hugeicons:more-vertical-circle-01"
-          className={s.button}
-        >
-          <span>{truncateAddress(address)}</span>
-        </Button>
-      }
-      position="bottom-right"
-    >
-      <ul>
-        {/* <li>
-          <Button iconLeft="hugeicons:user" isNav={true}>
-            Account
-          </Button>
-        </li>
-        <li>
-          <Button iconLeft="hugeicons:settings-02" isNav={true}>
-            Settings
-          </Button>
-        </li> */}
-        <li>
+    <>
+      <Dropdown
+        opener={
           <Button
-            iconLeft="hugeicons:logout-03"
-            isNav={true}
-            onClick={handleLogout}
-            variant="danger"
+            iconRight="hugeicons:more-vertical-circle-01"
+            className={s.button}
           >
-            Logout
+            <span>{truncateAddress(address)}</span>
           </Button>
-        </li>
-      </ul>
-    </Dropdown>
+        }
+        position="bottom-right"
+      >
+        <ul>
+          {/* <li>
+            <Button iconLeft="hugeicons:user" isNav={true}>
+              Account
+            </Button>
+          </li> */}
+          <li>
+            <Button
+              iconLeft="hugeicons:logout-03"
+              isNav={true}
+              onClick={handleLogout}
+              variant="danger"
+              data-dropdown-close
+            >
+              Logout
+            </Button>
+          </li>
+        </ul>
+      </Dropdown>
+    </>
   )
 }

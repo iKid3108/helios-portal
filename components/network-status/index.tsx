@@ -5,9 +5,11 @@ import s from "./network-status.module.scss"
 import clsx from "clsx"
 import { useBlockInfo } from "@/hooks/useBlockInfo"
 import { Link } from "@/components/link"
+import { useAppStore } from "@/stores/app"
 
 export function NetworkStatus() {
   const { lastBlockNumber, blockTime } = useBlockInfo()
+  const { debugMode, hasHydrated } = useAppStore()
   const [isMounting, setIsMounting] = useState(false)
   const prevBlockNumber = useRef<number | null>(null)
   const fetchStart = useRef<number | null>(null)
@@ -34,9 +36,8 @@ export function NetworkStatus() {
   // Determine status color
   let statusColor: "green" | "orange" | "red" = "green"
   if (blockTime) {
-    const age = Date.now() - blockTime * 1000
-    if (age > 30000) statusColor = "red"
-    else if (age > 15000) statusColor = "orange"
+    if (blockTime > 30) statusColor = "red"
+    else if (blockTime > 15) statusColor = "orange"
   }
 
   // Explorer link
@@ -44,7 +45,8 @@ export function NetworkStatus() {
     ? `https://explorer.helioschainlabs.org/blocks/${lastBlockNumber}`
     : "#"
 
-  if (!lastBlockNumber) return null
+  if (!hasHydrated) return null
+  if (!lastBlockNumber || !debugMode) return null
 
   return (
     <div className={s["network-status__fixed"]}>

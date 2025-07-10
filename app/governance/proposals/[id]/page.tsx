@@ -83,7 +83,6 @@ export default async function ProposalDetail({
   const forVotes = (Number(yesVotes) / 1e18).toFixed(2) // Assuming 18 decimals
   const againstVotes = (Number(noVotes) / 1e18).toFixed(2)
   const quorum = "4,000,000" // Replace with actual quorum data
-  console.log("proposal", proposal)
 
   return (
     <>
