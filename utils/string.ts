@@ -21,6 +21,10 @@ export const getErrorMessage = (error: any) => {
       errorMessage = "User denied transaction signature."
     }
 
+    if (errorMessage.includes("reverted")) {
+      errorMessage = "An error occured, please try again."
+    }
+
     return errorMessage
   }
 
