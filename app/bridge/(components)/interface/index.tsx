@@ -97,7 +97,8 @@ export const Interface = () => {
   })
 
   const tokensByChain = qEnrichedTokensByChain.data || []
-  const estimatedFees = (parseFloat(form.amount) / 100).toString()
+  // const estimatedFees = (parseFloat(form.amount) / 100).toString()
+  const estimatedFees = "0.5"
   const isDeposit = heliosChainIndex
     ? form.to?.chainId === chains[heliosChainIndex].chainId
     : false
@@ -120,8 +121,14 @@ export const Interface = () => {
     setOpenChain(true)
   }
 
-  const handleChangeChain = (chain: HyperionChain, forceChainType?: "from" | "to") => {
-    if ((chainType === 'from' || forceChainType === "from") && chain.chainId !== form.from?.chainId) {
+  const handleChangeChain = (
+    chain: HyperionChain,
+    forceChainType?: "from" | "to"
+  ) => {
+    if (
+      (chainType === "from" || forceChainType === "from") &&
+      chain.chainId !== form.from?.chainId
+    ) {
       switchChain({ chainId: chain.chainId })
       setOpenChain(false)
 
@@ -139,7 +146,7 @@ export const Interface = () => {
 
   const handleSwap = () => {
     if (form.to) {
-      handleChangeChain(form.to, 'from')
+      handleChangeChain(form.to, "from")
     }
   }
 
@@ -544,8 +551,9 @@ export const Interface = () => {
                   "No Fees"
                 ) : (
                   <>
-                    <small>~1% =</small>
-                    {estimatedFees} {tokenInfo.data?.symbol}
+                    {/* <small>~1% =</small> */}
+                    {/* {estimatedFees} {tokenInfo.data?.symbol} */}
+                    {estimatedFees} HLS
                   </>
                 )}
               </strong>
