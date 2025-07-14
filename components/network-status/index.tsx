@@ -9,7 +9,7 @@ import { useAppStore } from "@/stores/app"
 
 export function NetworkStatus() {
   const { lastBlockNumber, blockTime, error } = useBlockInfo()
-  const { debugMode, hasHydrated, rpcUrl } = useAppStore()
+  const { debugMode, hasHydrated } = useAppStore()
   const [isMounting, setIsMounting] = useState(false)
   const [connectionError, setConnectionError] = useState<boolean>(false)
   const prevBlockNumber = useRef<number | null>(null)
