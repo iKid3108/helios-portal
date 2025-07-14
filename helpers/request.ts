@@ -1,7 +1,11 @@
-import { RPC_URL } from "@/config/app"
+import { RPC_URL_DEFAULT } from "@/config/app"
+import { getRpcUrl } from "@/config/rpc"
 
 async function request<T>(method: string, params: any[]): Promise<T | null> {
-  const response = await fetch(RPC_URL, {
+  // Get the dynamic RPC URL based on debug mode
+  const rpcUrl = typeof window !== "undefined" ? getRpcUrl() : RPC_URL_DEFAULT
+
+  const response = await fetch(rpcUrl, {
     method: "POST",
     headers: {
       "Content-Type": "application/json"

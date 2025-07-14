@@ -1,6 +1,7 @@
 import { CHAIN_COLORS } from "./constants"
 import { heliosChain } from "./wagmi"
-import { EXPLORER_URL, HELIOS_NETWORK_ID, RPC_URL } from "./app"
+import { EXPLORER_URL, HELIOS_NETWORK_ID, RPC_URL_DEFAULT } from "./app"
+import { getRpcUrl } from "./rpc"
 
 export interface ChainConfig {
   id: string
@@ -23,7 +24,7 @@ export const CHAIN_CONFIG: Record<number, ChainConfig> = {
     name: "Helios",
     color: CHAIN_COLORS.helios,
     iconName: "helios",
-    rpcUrl: RPC_URL,
+    rpcUrl: typeof window !== "undefined" ? getRpcUrl() : RPC_URL_DEFAULT,
     explorerUrl: EXPLORER_URL
   },
   11155111: {

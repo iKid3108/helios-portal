@@ -8,6 +8,8 @@ interface AppStore {
   setDebugMode: (debugMode: boolean) => void
   hasHydrated: boolean
   setHasHydrated: (hasHydrated: boolean) => void
+  rpcUrl: string
+  setRpcUrl: (rpcUrl: string) => void
 }
 
 export const useAppStore = create<AppStore>()(
@@ -18,11 +20,16 @@ export const useAppStore = create<AppStore>()(
       debugMode: false,
       setDebugMode: (debugMode) => set({ debugMode }),
       hasHydrated: false,
-      setHasHydrated: (hasHydrated) => set({ hasHydrated })
+      setHasHydrated: (hasHydrated) => set({ hasHydrated }),
+      rpcUrl: "https://testnet1.helioschainlabs.org",
+      setRpcUrl: (rpcUrl) => set({ rpcUrl })
     }),
     {
       name: "helios-app-store",
-      partialize: (state) => ({}), // <-- do not persist debugMode
+      partialize: (state) => ({
+        rpcUrl: state.rpcUrl,
+        debugMode: state.debugMode
+      }), // <-- persist both rpcUrl and debugMode
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated(true)
       }
