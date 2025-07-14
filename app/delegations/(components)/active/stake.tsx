@@ -13,6 +13,7 @@ import { useDelegate } from "@/hooks/useDelegate"
 import { Message } from "@/components/message"
 import { HELIOS_TOKEN_ADDRESS } from "@/config/app"
 import { ethers } from "ethers"
+import { getErrorMessage } from "@/utils/string"
 
 interface ModalStakeProps {
   title: string
@@ -67,7 +68,7 @@ export const ModalStake = ({
 
       router.push("/delegations")
     } catch (err: any) {
-      toast.error(err?.message || "Error during delegation", {
+      toast.error(getErrorMessage(err) || "Error during delegation", {
         id: toastId
       })
     }

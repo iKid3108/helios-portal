@@ -27,6 +27,7 @@ import { useChains } from "@/hooks/useChains"
 import { ModalWrapper } from "../wrapper/modal"
 import { useWrapper } from "@/hooks/useWrapper"
 import { getChainConfig } from "@/config/chain-config"
+import { getErrorMessage } from "@/utils/string"
 
 type BridgeForm = {
   asset: string | null
@@ -242,7 +243,7 @@ export const Interface = () => {
 
       lightResetForm()
     } catch (err: any) {
-      toast.error(err?.message || "Failed to send bridge transaction.", {
+      toast.error(getErrorMessage(err) || "Failed to send bridge transaction.", {
         id: toastId
       })
     }

@@ -10,6 +10,7 @@ import { toast } from "sonner"
 import s from "./active.module.scss"
 import { useDelegate } from "@/hooks/useDelegate"
 import { TokenExtended } from "@/types/token"
+import { getErrorMessage } from "@/utils/string"
 
 interface ModalUnstakeProps {
   title: string
@@ -54,7 +55,7 @@ export const ModalUnstake = ({
       })
       setOpen(false)
     } catch (err: any) {
-      toast.error(err?.message || "Error during unstake", {
+      toast.error(getErrorMessage(err?.message) || "Error during unstake", {
         id: toastId
       })
     }
