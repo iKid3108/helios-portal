@@ -258,23 +258,18 @@ const AllProposals: React.FC = () => {
 
       if (totalPages === null) {
         // We don't know total pages yet, show conservative pagination
-        // Only show current page and next page button (handled by hasNextPage)
         pages.push(currentPage)
 
-        // Add previous page if it exists
         if (currentPage > 1) {
           pages.unshift(currentPage - 1)
         }
-
-        // Add next page if we think it might exist (but don't show the button yet)
-        // The Next button will handle this
       } else {
         // We know the total, show normal pagination
         let startPage = Math.max(
           1,
           currentPage - Math.floor(maxVisiblePages / 2)
         )
-        const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1)
+        let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1)
 
         // Adjust start if we're near the end
         if (endPage - startPage + 1 < maxVisiblePages) {
@@ -289,6 +284,17 @@ const AllProposals: React.FC = () => {
       return pages
     }
 
+    const pageNumbers = getPageNumbers()
+    const showFirstPage =
+      totalPages !== null && pageNumbers.length > 0 && pageNumbers[0] > 1
+    const showLastPage =
+      totalPages !== null &&
+      pageNumbers.length > 0 &&
+      pageNumbers[pageNumbers.length - 1] < totalPages
+    const showFirstEllipsis = showFirstPage && pageNumbers[0] > 2
+    const showLastEllipsis =
+      showLastPage && pageNumbers[pageNumbers.length - 1] < totalPages - 1
+
     return (
       <div className={styles["pagination"]}>
         <button
@@ -302,7 +308,7 @@ const AllProposals: React.FC = () => {
         </button>
 
         <div className={styles["page-numbers"]}>
-          {totalPages !== null && currentPage > 3 && (
+          {showFirstPage && (
             <>
               <button
                 className={styles["page-btn"]}
@@ -311,13 +317,13 @@ const AllProposals: React.FC = () => {
               >
                 1
               </button>
-              {currentPage > 4 && (
+              {showFirstEllipsis && (
                 <span className={styles["ellipsis"]}>...</span>
               )}
             </>
           )}
 
-          {getPageNumbers().map((page) => (
+          {pageNumbers.map((page) => (
             <button
               key={page}
               className={`${styles["page-btn"]} ${
@@ -330,9 +336,9 @@ const AllProposals: React.FC = () => {
             </button>
           ))}
 
-          {totalPages !== null && currentPage < totalPages - 2 && (
+          {showLastPage && (
             <>
-              {currentPage < totalPages - 3 && (
+              {showLastEllipsis && (
                 <span className={styles["ellipsis"]}>...</span>
               )}
               <button
