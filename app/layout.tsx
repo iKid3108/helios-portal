@@ -6,6 +6,10 @@ import { fonts } from "./fonts"
 import ContextProvider from "@/context"
 import { headers } from "next/headers"
 import { NewsBanner } from "./(components)/news-banner"
+import Script from "next/script"
+import NetworkStatus from "@/components/network-status"
+import DebugIndicator from "@/components/debug-indicator"
+import GasPriceDisplay from "@/components/gas-price-display"
 
 export const metadata = MetadataSeo({
   title: "Your Gateway to Staking, Delegation & Cross-Chain Governance",
@@ -26,7 +30,7 @@ export default async function RootLayout({
 
   return (
     <html lang="en" dir="ltr">
-      <head>
+      <head suppressHydrationWarning={true}>
         {/* Microsoft Clarity */}
         <script
           type="text/javascript"
@@ -39,10 +43,10 @@ export default async function RootLayout({
           }}
         />
         {/* Google Tag Manager */}
-        <script
+        <Script
           async
           src="https://www.googletagmanager.com/gtag/js?id=G-RHJMTZBRG1"
-        ></script>
+        ></Script>
         <script
           dangerouslySetInnerHTML={{
             __html: `window.dataLayer = window.dataLayer || [];
@@ -56,6 +60,9 @@ export default async function RootLayout({
         <NewsBanner />
         <ContextProvider cookies={cookies}>
           <Wrapper>{children}</Wrapper>
+          <NetworkStatus />
+          <GasPriceDisplay />
+          <DebugIndicator />
         </ContextProvider>
       </body>
     </html>

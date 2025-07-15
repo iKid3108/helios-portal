@@ -1,0 +1,123 @@
+@use "styles/mixins" as *;
+
+.network-status {
+  display: flex;
+  align-items: center;
+  gap: var(--size-3);
+  padding: 0.75rem 1.25rem;
+  background: var(--background-low);
+  border-radius: var(--radius-m);
+  box-shadow: 0 4px 24px rgba(16, 30, 54, 0.12),
+    0 1.5px 4px rgba(16, 30, 54, 0.08);
+
+  @media (max-width: 600px) {
+    padding: 0.5rem 0.75rem;
+  }
+}
+
+.network-status__block {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--primary-high);
+  text-decoration: underline dotted;
+  cursor: pointer;
+  transition: color 0.2s, text-decoration-thickness 0.2s,
+    text-underline-offset 0.2s;
+
+  &:hover,
+  &:focus {
+    color: inherit;
+    text-decoration: underline solid 2.5px;
+    text-underline-offset: 2px; // More offset for a modern look
+    background: none;
+    border-radius: 0;
+    transform: none;
+  }
+}
+
+.network-status__block--healthy {
+  color: var(--success-medium);
+}
+.network-status__block--warning {
+  color: var(--warning-medium);
+}
+.network-status__block--danger {
+  color: var(--danger-medium);
+}
+
+.network-status__block--healthy:hover,
+.network-status__block--healthy:focus {
+  color: var(--success-medium);
+}
+.network-status__block--warning:hover,
+.network-status__block--warning:focus {
+  color: var(--warning-medium);
+}
+.network-status__block--danger:hover,
+.network-status__block--danger:focus {
+  color: var(--danger-medium);
+}
+
+.network-status__dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--success-medium);
+  position: relative;
+  transition: background 0.2s;
+
+  &--warning {
+    background: var(--warning-medium);
+  }
+  &--danger {
+    background: var(--danger-medium);
+  }
+}
+
+.network-status__dot--warning {
+  background: var(--warning-medium);
+}
+.network-status__dot--danger {
+  background: var(--danger-medium);
+}
+
+.network-status__spinner {
+  position: absolute;
+  left: -2px;
+  top: -2px;
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-left: 2px solid var(--primary-medium);
+  border-radius: 50%;
+  animation: network-status-spin 1s linear infinite;
+}
+
+.network-status__fixed {
+  position: fixed;
+  right: 2rem;
+  bottom: 2rem;
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+}
+
+.debug-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  background-color: var(--warning-medium);
+  color: var(--background-high);
+  padding: 0.2rem 0.4rem;
+  border-radius: var(--radius-s);
+  margin-right: 0.5rem;
+  letter-spacing: 0.05em;
+}
+
+@keyframes network-status-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

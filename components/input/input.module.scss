@@ -42,6 +42,12 @@
     }
   }
 
+  .icon:last-child {
+    position: absolute;
+    right: var(--size-3);
+    pointer-events: none;
+  }
+
   .value {
     flex: 1;
     font-weight: 600;
@@ -64,10 +70,28 @@
     line-height: 2;
     appearance: none;
     cursor: pointer;
-    padding-right: var(--size-4);
+    padding: 0.5em 2em 0.5em 0.5em;
+    font-weight: 600;
+    border: none;
+    background-color: transparent;
+    color: var(--text-primary);
+    font-size: var(--size-4-5);
+    border-radius: var(--radius-xs);
 
     &::-ms-expand {
       display: none;
+    }
+
+    option {
+      background-color: var(--background-medium);
+      color: var(--text-primary);
+      font-weight: 500;
+      padding: 0.5em;
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
     }
   }
 

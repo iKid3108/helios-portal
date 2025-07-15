@@ -26,6 +26,7 @@ export interface ButtonProps {
   onClick?: React.MouseEventHandler<HTMLElement>
   isActive?: boolean
   isNav?: boolean
+  title?: string
 }
 
 export const Button = ({
@@ -45,6 +46,7 @@ export const Button = ({
   classNameActive,
   classNameIcon,
   isNav = false,
+  title,
   ...props
 }: ButtonProps) => {
   const classIcon = clsx(s.icon, classNameIcon)
@@ -97,7 +99,8 @@ export const Button = ({
     "data-active": isActive,
     "data-nav": isNav,
     onClick,
-    disabled
+    disabled,
+    title
   }
 
   if (href) {

@@ -31,26 +31,35 @@ export function Modal({
 
   useEffect(() => {
     modalRootRef.current = document.getElementById("modal-root")
+  }, [])
 
+  useEffect(() => {
     if (open) {
       document.body.classList.add("overflow")
     } else {
       document.body.classList.remove("overflow")
     }
 
+    return () => {
+      document.body.classList.remove("overflow")
+    }
+  }, [open])
+
+  useEffect(() => {
     const handleEscKey = (event: KeyboardEvent) => {
       if (event.key === "Escape" && open) {
-        handleClose()
+        onClose()
       }
     }
 
-    document.addEventListener("keydown", handleEscKey)
+    if (open) {
+      document.addEventListener("keydown", handleEscKey)
+    }
 
     return () => {
-      document.body.classList.remove("overflow")
       document.removeEventListener("keydown", handleEscKey)
     }
-  }, [open])
+  }, [open, onClose])
 
   const handleClose = () => {
     onClose()
@@ -74,12 +83,21 @@ export function Modal({
         full && s.overlayFull,
         responsiveBottom && s.responsiveBottom
       )}
+      onClick={(e) => {
+        // Only close if clicking directly on the overlay
+        if (e.target === e.currentTarget) {
+          handleClose()
+        }
+      }}
     >
       <div
         className={clsx(s.modal, className, full && s.full)}
         role="dialog"
         aria-modal="true"
         aria-labelledby={title ? "modal-title" : undefined}
+        onClick={(e) => {
+          e.stopPropagation()
+        }}
       >
         {closeButton && (
           <Button
@@ -98,7 +116,6 @@ export function Modal({
         )}
         {children}
       </div>
-      <div className={s.overlayClose} onClick={handleClose} />
     </div>,
     modalRootRef.current
   )

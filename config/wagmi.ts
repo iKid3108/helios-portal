@@ -9,7 +9,8 @@ import {
 } from "@reown/appkit/networks"
 import { cookieStorage, createStorage } from "@wagmi/core"
 import { defineChain } from "viem"
-import { HELIOS_NETWORK_ID, RPC_URL } from "./app"
+import { HELIOS_NETWORK_ID, RPC_URL_DEFAULT } from "./app"
+import { getRpcUrl } from "./rpc"
 import { env } from "@/env"
 
 export const projectId = env.NEXT_PUBLIC_PROJECT_ID
@@ -29,8 +30,12 @@ export const heliosChain = defineChain({
     symbol: "HELIOS"
   },
   rpcUrls: {
-    default: { http: [RPC_URL] },
-    public: { http: [RPC_URL] }
+    default: {
+      http: [typeof window !== "undefined" ? getRpcUrl() : RPC_URL_DEFAULT]
+    },
+    public: {
+      http: [typeof window !== "undefined" ? getRpcUrl() : RPC_URL_DEFAULT]
+    }
   },
   blockExplorers: {
     default: {

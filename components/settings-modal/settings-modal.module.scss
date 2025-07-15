@@ -1,0 +1,283 @@
+@use "styles/mixins" as *;
+
+.modal {
+  max-width: 600px;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-6);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-3);
+  padding: var(--size-4);
+  background: var(--background-low);
+  border-radius: var(--radius-m);
+  border: 1px solid var(--border-low);
+}
+
+.sectionTitle {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.sectionDescription {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.toggleGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--size-3);
+  margin-top: var(--size-2);
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+}
+
+.toggle-track {
+  width: 48px;
+  height: 24px;
+  background: #cbd5e1; // <-- grey for disabled/off
+  border-radius: 9999px;
+  position: relative;
+  transition: background 0.2s;
+}
+
+// Blue when checked
+.toggleInput:checked + .toggle-track {
+  background: #0a40d9; // <-- blue for enabled/on
+}
+
+.toggle-thumb {
+  width: 20px;
+  height: 20px;
+  background: #fff;
+  border-radius: 50%;
+  position: absolute;
+  left: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  transition: left 0.2s;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+
+.toggleInput {
+  display: none;
+}
+
+.toggleSlider {
+  position: relative;
+  width: 48px;
+  height: 24px;
+  background: var(--background-highest);
+  border-radius: 12px;
+  transition: background 0.2s;
+  // border: 1px solid var(--border-low);
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 18px;
+    height: 18px;
+    background: var(--background-low);
+    border-radius: 50%;
+    transition: transform 0.2s;
+  }
+}
+
+.toggleInput:checked + .toggleSlider {
+  background: var(--primary-medium);
+  border-color: var(--primary-medium);
+
+  &::before {
+    transform: translateX(24px);
+    background: white;
+  }
+}
+
+// Move thumb when checked
+.toggleInput:checked + .toggle-track .toggle-thumb {
+  left: 26px; // 48px (track width) - 20px (thumb width) - 2px (left margin)
+}
+
+.toggleLabel {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.rpcList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-2);
+  margin-top: var(--size-2);
+}
+
+.rpcItem {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-2);
+}
+
+.gasPriceContainer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-3);
+  margin-top: var(--size-2);
+}
+
+.gasPriceSelector {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-2);
+}
+
+.gasPriceLabel {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-medium);
+}
+
+.gasPriceDropdown {
+  position: relative;
+  width: 100%;
+  margin-top: var(--size-1);
+}
+
+.gasPriceDropdownButton {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-s);
+  background-color: var(--background-medium);
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background-color: var(--background-high);
+    border-color: var(--border-high);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--primary-medium);
+    box-shadow: 0 0 0 2px var(--primary-low);
+  }
+}
+
+.gasPriceSelectedOption {
+  display: flex;
+  align-items: center;
+  gap: var(--size-2);
+}
+
+.gasPriceAvatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  font-size: 1.25rem;
+}
+
+.gasPriceDropdownArrow {
+  font-size: 0.75rem;
+  color: var(--text-medium);
+}
+
+.gasPriceDropdownMenu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  width: 100%;
+  background-color: var(--background-medium);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-s);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+  overflow: hidden;
+}
+
+.gasPriceDropdownItem {
+  display: flex;
+  align-items: center;
+  gap: var(--size-2);
+  padding: 0.75rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  background-color: var(--background-medium);
+
+  &:hover {
+    background-color: var(--background-high);
+  }
+}
+
+.gasPriceDropdownItemSelected {
+  background-color: var(--background-highest);
+  border-left: 3px solid var(--primary-medium);
+  padding-left: calc(0.75rem - 3px);
+
+  &:hover {
+    background-color: var(--background-highest);
+  }
+}
+
+.gasPriceOptionContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.gasPriceOptionLabel {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-high);
+}
+
+.gasPriceOptionDescription {
+  font-size: 0.75rem;
+  color: var(--text-medium);
+}
+
+.gasPriceDescription {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.actions {
+  display: flex;
+  gap: var(--size-3);
+  justify-content: flex-end;
+  margin-top: var(--size-4);
+  padding-top: var(--size-4);
+  border-top: 1px solid var(--border-low);
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+
+    button {
+      width: 100%;
+    }
+  }
+}
