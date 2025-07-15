@@ -64,8 +64,8 @@ export function NetworkStatus() {
   // Determine status color
   let statusColor: "green" | "orange" | "red" = "green"
   if (blockTime) {
-    if (blockTime > 30) statusColor = "red"
-    else if (blockTime > 15) statusColor = "orange"
+    if (blockTime > 60) statusColor = "red"
+    else if (blockTime > 30) statusColor = "orange"
   }
 
   // If there's a connection error, force red status
