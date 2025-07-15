@@ -15,9 +15,9 @@ interface VotingSectionProps {
 
 // Vote options enum matching your smart contract
 enum VoteOption {
-  NO = 1,
-  YES = 2,
-  ABSTAIN = 3,
+  YES = 1,
+  ABSTAIN = 2,
+  NO = 3,
   NO_WITH_VOTE = 4
 }
 

@@ -66,7 +66,6 @@ export const SettingsModal = ({ open, onClose }: SettingsModalProps) => {
     // Check if settings have changed
     const debugModeChanged = debugMode !== localDebugMode
     const rpcUrlChanged = rpcUrl !== localRpcUrl && localDebugMode
-    const gasPriceOptionChanged = gasPriceOption !== localGasPriceOption
 
     // Update settings in the store
     setDebugMode(localDebugMode)

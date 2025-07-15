@@ -29,8 +29,6 @@ export function useGasPrice() {
       : BigInt(baseGasPrice)
     : BigInt("20000000000") // 20 Gwei as a fallback
 
-  console.log(baseGasPrice)
-
   return {
     baseGasPrice,
     adjustedGasPrice,

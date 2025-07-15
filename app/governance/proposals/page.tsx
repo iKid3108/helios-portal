@@ -197,10 +197,10 @@ const AllProposals: React.FC = () => {
               : item.status === "REJECTED"
               ? styles.rejected
               : styles.voting_period,
-          voteFor: `${yesFormatted}HLS`,
-          voteAgainst: `${noFormatted}HLS`,
-          voteAbstain: `${abstainFormatted}HLS`,
-          voteNoWithVeto: `${noWithVetoFormatted}HLS`,
+          voteFor: `${yesFormatted}shares`,
+          voteAgainst: `${noFormatted}shares`,
+          voteAbstain: `${abstainFormatted}shares`,
+          voteNoWithVeto: `${noWithVetoFormatted}shares`,
           voteForPercent: `${voteForPercent}%`,
           voteAgainstPercent: `${voteAgainstPercent}%`,
           voteAbstainPercent: `${voteAbstainPercent}%`,
@@ -269,7 +269,7 @@ const AllProposals: React.FC = () => {
           1,
           currentPage - Math.floor(maxVisiblePages / 2)
         )
-        let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1)
+        const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1)
 
         // Adjust start if we're near the end
         if (endPage - startPage + 1 < maxVisiblePages) {

@@ -47,12 +47,12 @@ export function VoteResults({
         <div className={styles.voteHeader}>
           <span className={styles.forVotes}>
             <Icon icon="mdi:thumb-up-outline" width={16} height={16} /> FOR{" "}
-            {forVotes} HLS
+            {forVotes} shares
           </span>
           <div className={styles.voteDivider} />
           <span className={styles.againstVotes}>
             <Icon icon="mdi:thumb-down-outline" width={16} height={16} />{" "}
-            AGAINST {againstVotes} HLS
+            AGAINST {againstVotes} shares
           </span>
         </div>
 
