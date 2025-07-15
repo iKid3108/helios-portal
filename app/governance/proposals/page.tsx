@@ -248,7 +248,7 @@ const AllProposals: React.FC = () => {
         loadProposals(1)
       })
     }
-  }, [])
+  })
 
   // Pagination component
   const Pagination = () => {
