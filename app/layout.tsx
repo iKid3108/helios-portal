@@ -8,6 +8,8 @@ import { headers } from "next/headers"
 import { NewsBanner } from "./(components)/news-banner"
 import Script from "next/script"
 import NetworkStatus from "@/components/network-status"
+import DebugIndicator from "@/components/debug-indicator"
+import GasPriceDisplay from "@/components/gas-price-display"
 
 export const metadata = MetadataSeo({
   title: "Your Gateway to Staking, Delegation & Cross-Chain Governance",
@@ -59,6 +61,8 @@ export default async function RootLayout({
         <ContextProvider cookies={cookies}>
           <Wrapper>{children}</Wrapper>
           <NetworkStatus />
+          <GasPriceDisplay />
+          <DebugIndicator />
         </ContextProvider>
       </body>
     </html>

@@ -1,0 +1,21 @@
+@use "styles/mixins" as *;
+
+.debug-indicator {
+  position: fixed;
+  left: 1rem;
+  bottom: 1rem;
+  z-index: 1000;
+  font-size: 0.7rem;
+  font-weight: 700;
+  background-color: var(--warning-medium);
+  color: var(--background-high);
+  padding: 0.3rem 0.6rem;
+  border-radius: var(--radius-s);
+  letter-spacing: 0.05em;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  opacity: 0.9;
+
+  &:hover {
+    opacity: 1;
+  }
+}

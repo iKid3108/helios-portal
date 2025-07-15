@@ -1,0 +1,100 @@
+@use "styles/mixins" as *;
+
+.gas-price-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+  position: relative;
+}
+
+.gas-price-selector__label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-medium);
+}
+
+.gas-price-selector__dropdown {
+  position: relative;
+  width: 100%;
+}
+
+.gas-price-selector__selected {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: var(--background-low);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-m);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.9rem;
+
+  &:hover {
+    border-color: var(--border-high);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--primary-medium);
+    box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.2);
+  }
+}
+
+.gas-price-selector__arrow {
+  font-size: 0.7rem;
+  color: var(--text-low);
+}
+
+.gas-price-selector__options {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  left: 0;
+  width: 100%;
+  background: var(--background-medium);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-m);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  padding: 0.5rem 0;
+  margin: 0;
+  list-style: none;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.gas-price-selector__option {
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover {
+    background: var(--background-low);
+  }
+
+  &--selected {
+    background: var(--primary-low);
+
+    &:hover {
+      background: var(--primary-low);
+    }
+  }
+}
+
+.gas-price-selector__option-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.gas-price-selector__option-label {
+  font-weight: 500;
+  color: var(--text-high);
+}
+
+.gas-price-selector__option-description {
+  font-size: 0.8rem;
+  color: var(--text-low);
+}

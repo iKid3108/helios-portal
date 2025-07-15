@@ -102,6 +102,17 @@
   align-items: flex-end;
 }
 
+.debug-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  background-color: var(--warning-medium);
+  color: var(--background-high);
+  padding: 0.2rem 0.4rem;
+  border-radius: var(--radius-s);
+  margin-right: 0.5rem;
+  letter-spacing: 0.05em;
+}
+
 @keyframes network-status-spin {
   0% {
     transform: rotate(0deg);

@@ -125,7 +125,7 @@
 .rpcList {
   display: flex;
   flex-direction: column;
-  gap: var(--size-3);
+  gap: var(--size-2);
   margin-top: var(--size-2);
 }
 
@@ -133,6 +133,136 @@
   display: flex;
   flex-direction: column;
   gap: var(--size-2);
+}
+
+.gasPriceContainer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-3);
+  margin-top: var(--size-2);
+}
+
+.gasPriceSelector {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-2);
+}
+
+.gasPriceLabel {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-medium);
+}
+
+.gasPriceDropdown {
+  position: relative;
+  width: 100%;
+  margin-top: var(--size-1);
+}
+
+.gasPriceDropdownButton {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-s);
+  background-color: var(--background-medium);
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background-color: var(--background-high);
+    border-color: var(--border-high);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--primary-medium);
+    box-shadow: 0 0 0 2px var(--primary-low);
+  }
+}
+
+.gasPriceSelectedOption {
+  display: flex;
+  align-items: center;
+  gap: var(--size-2);
+}
+
+.gasPriceAvatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  font-size: 1.25rem;
+}
+
+.gasPriceDropdownArrow {
+  font-size: 0.75rem;
+  color: var(--text-medium);
+}
+
+.gasPriceDropdownMenu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  width: 100%;
+  background-color: var(--background-medium);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-s);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+  overflow: hidden;
+}
+
+.gasPriceDropdownItem {
+  display: flex;
+  align-items: center;
+  gap: var(--size-2);
+  padding: 0.75rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  background-color: var(--background-medium);
+
+  &:hover {
+    background-color: var(--background-high);
+  }
+}
+
+.gasPriceDropdownItemSelected {
+  background-color: var(--background-highest);
+  border-left: 3px solid var(--primary-medium);
+  padding-left: calc(0.75rem - 3px);
+
+  &:hover {
+    background-color: var(--background-highest);
+  }
+}
+
+.gasPriceOptionContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.gasPriceOptionLabel {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-high);
+}
+
+.gasPriceOptionDescription {
+  font-size: 0.75rem;
+  color: var(--text-medium);
+}
+
+.gasPriceDescription {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.5;
 }
 
 .actions {

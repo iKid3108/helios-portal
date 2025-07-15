@@ -86,6 +86,11 @@ export function NetworkStatus() {
     return (
       <div className={s["network-status__fixed"]}>
         <div className={s["network-status"]}>
+          {/* Debug mode indicator */}
+          <div className={s["debug-badge"]} title="Debug Mode Enabled">
+            DEBUG
+          </div>
+
           <div
             className={clsx(
               s["network-status__block"],
@@ -112,6 +117,11 @@ export function NetworkStatus() {
   return (
     <div className={s["network-status__fixed"]}>
       <div className={s["network-status"]}>
+        {/* Debug mode indicator */}
+        <div className={s["debug-badge"]} title="Debug Mode Enabled">
+          DEBUG
+        </div>
+
         <Link
           href={explorerUrl}
           className={clsx(
