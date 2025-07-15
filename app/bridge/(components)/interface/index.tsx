@@ -271,9 +271,7 @@ export const Interface = () => {
       from,
       to
     }))
-
-    resetFeedback()
-  }, [chains, heliosChainIndex, chainId, lightResetForm, resetFeedback])
+  }, [chains, heliosChainIndex, chainId, lightResetForm])
 
   const amountNb = parseFloat(form.amount)
   const heliosInOrOut =
