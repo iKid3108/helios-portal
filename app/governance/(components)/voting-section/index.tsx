@@ -15,10 +15,10 @@ interface VotingSectionProps {
 
 // Vote options enum matching your smart contract
 enum VoteOption {
-  NO = 0,
-  YES = 1,
-  ABSTAIN = 2,
-  NO_WITH_VOTE = 3
+  NO = 1,
+  YES = 2,
+  ABSTAIN = 3,
+  NO_WITH_VOTE = 4
 }
 
 export function VotingSection({
@@ -30,6 +30,7 @@ export function VotingSection({
   const { vote, feedback, resetFeedback, isLoading } = useVote()
   const [selectedVote, setSelectedVote] = useState<VoteOption | null>(null)
   const [voteMetadata, setVoteMetadata] = useState("")
+  const [hasVoted, setHasVoted] = useState(false)
 
   const submitVote = async () => {
     if (!address || selectedVote === null) return
@@ -50,9 +51,11 @@ export function VotingSection({
         toast.loading(feedback.message, { id: "vote-status" })
       } else if (feedback.status === "success") {
         toast.success(feedback.message, { id: "vote-status" })
-        // Reset form on success
-        setSelectedVote(null)
+        // Mark as voted but allow voting again
+        setHasVoted(true)
         setVoteMetadata("")
+        // Reset hasVoted after showing confirmation briefly
+        setTimeout(() => setHasVoted(false), 3000)
       } else if (feedback.status === "danger") {
         toast.error(feedback.message, { id: "vote-status" })
       }
@@ -131,121 +134,143 @@ export function VotingSection({
             </span>
           </div>
           {canVote && (
-            <form
-              className={styles.voteForm}
-              onSubmit={(e) => {
-                e.preventDefault()
-                submitVote()
-              }}
-            >
-              <div className={styles.voteOptions}>
-                <label className={styles.voteOption}>
-                  <input
-                    type="radio"
-                    name="voteOption"
-                    value={VoteOption.YES}
-                    checked={selectedVote === VoteOption.YES}
-                    onChange={() => setSelectedVote(VoteOption.YES)}
-                    disabled={isLoading}
+            <>
+              {hasVoted && (
+                <div className={styles.voteConfirmation}>
+                  <Icon
+                    icon="mdi:check-circle"
+                    width={18}
+                    height={18}
+                    className={styles.confirmationIcon}
                   />
-                  <span className={`${styles.optionLabel} ${styles.yes}`}>
-                    <Icon
-                      icon="mdi:thumb-up-outline"
-                      width={18}
-                      height={18}
-                      className={styles.optionIcon}
-                    />{" "}
-                    Vote Yes
-                  </span>
-                </label>
-                <label className={styles.voteOption}>
-                  <input
-                    type="radio"
-                    name="voteOption"
-                    value={VoteOption.NO}
-                    checked={selectedVote === VoteOption.NO}
-                    onChange={() => setSelectedVote(VoteOption.NO)}
-                    disabled={isLoading}
-                  />
-                  <span className={`${styles.optionLabel} ${styles.no}`}>
-                    <Icon
-                      icon="mdi:thumb-down-outline"
-                      width={18}
-                      height={18}
-                      className={styles.optionIcon}
-                    />{" "}
-                    Vote No
-                  </span>
-                </label>
-                <label className={styles.voteOption}>
-                  <input
-                    type="radio"
-                    name="voteOption"
-                    value={VoteOption.ABSTAIN}
-                    checked={selectedVote === VoteOption.ABSTAIN}
-                    onChange={() => setSelectedVote(VoteOption.ABSTAIN)}
-                    disabled={isLoading}
-                  />
-                  <span className={`${styles.optionLabel} ${styles.abstain}`}>
-                    <Icon
-                      icon="mdi:minus-circle-outline"
-                      width={18}
-                      height={18}
-                      className={styles.optionIcon}
-                    />{" "}
-                    Abstain
-                  </span>
-                </label>
-                <label className={styles.voteOption}>
-                  <input
-                    type="radio"
-                    name="voteOption"
-                    value={VoteOption.NO_WITH_VOTE}
-                    checked={selectedVote === VoteOption.NO_WITH_VOTE}
-                    onChange={() => setSelectedVote(VoteOption.NO_WITH_VOTE)}
-                    disabled={isLoading}
-                  />
-                  <span className={`${styles.optionLabel} ${styles.novote}`}>
-                    <Icon
-                      icon="mdi:cancel"
-                      width={18}
-                      height={18}
-                      className={styles.optionIcon}
-                    />{" "}
-                    No with Veto
-                  </span>
-                </label>
-              </div>
-              <div className={styles.metadataSection}>
-                <label htmlFor="voteMetadata" className={styles.metadataLabel}>
-                  Vote Comment (Optional):
-                </label>
-                <textarea
-                  id="voteMetadata"
-                  className={styles.metadataInput}
-                  value={voteMetadata}
-                  onChange={(e) => setVoteMetadata(e.target.value)}
-                  placeholder="Add a comment about your vote..."
-                  rows={3}
-                  disabled={isLoading}
-                />
-              </div>
-              <button
-                className={styles.submitVoteButton}
-                type="submit"
-                disabled={selectedVote === null || isLoading}
+                  <span>Your vote has been successfully submitted!</span>
+                </div>
+              )}
+              <form
+                className={styles.voteForm}
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  submitVote()
+                }}
               >
-                {isLoading ? (
-                  <span className={styles.loadingContent}>
-                    <span className={styles.spinner}></span> Submitting...
-                  </span>
-                ) : (
-                  <>
-                    <Icon icon="mdi:send" width={16} height={16} /> Submit Vote
-                  </>
-                )}
-              </button>
-            </form>
+                <div className={styles.voteOptions}>
+                  <label className={styles.voteOption}>
+                    <input
+                      type="radio"
+                      name="voteOption"
+                      value={VoteOption.YES}
+                      checked={selectedVote === VoteOption.YES}
+                      onChange={() => setSelectedVote(VoteOption.YES)}
+                      disabled={isLoading}
+                    />
+                    <span className={`${styles.optionLabel} ${styles.yes}`}>
+                      <Icon
+                        icon="mdi:thumb-up-outline"
+                        width={18}
+                        height={18}
+                        className={styles.optionIcon}
+                      />{" "}
+                      Vote Yes
+                    </span>
+                  </label>
+                  <label className={styles.voteOption}>
+                    <input
+                      type="radio"
+                      name="voteOption"
+                      value={VoteOption.NO}
+                      checked={selectedVote === VoteOption.NO}
+                      onChange={() => setSelectedVote(VoteOption.NO)}
+                      disabled={isLoading}
+                    />
+                    <span className={`${styles.optionLabel} ${styles.no}`}>
+                      <Icon
+                        icon="mdi:thumb-down-outline"
+                        width={18}
+                        height={18}
+                        className={styles.optionIcon}
+                      />{" "}
+                      Vote No
+                    </span>
+                  </label>
+                  <label className={styles.voteOption}>
+                    <input
+                      type="radio"
+                      name="voteOption"
+                      value={VoteOption.ABSTAIN}
+                      checked={selectedVote === VoteOption.ABSTAIN}
+                      onChange={() => setSelectedVote(VoteOption.ABSTAIN)}
+                      disabled={isLoading}
+                    />
+                    <span className={`${styles.optionLabel} ${styles.abstain}`}>
+                      <Icon
+                        icon="mdi:minus-circle-outline"
+                        width={18}
+                        height={18}
+                        className={styles.optionIcon}
+                      />{" "}
+                      Abstain
+                    </span>
+                  </label>
+                  <label className={styles.voteOption}>
+                    <input
+                      type="radio"
+                      name="voteOption"
+                      value={VoteOption.NO_WITH_VOTE}
+                      checked={selectedVote === VoteOption.NO_WITH_VOTE}
+                      onChange={() => setSelectedVote(VoteOption.NO_WITH_VOTE)}
+                      disabled={isLoading}
+                    />
+                    <span className={`${styles.optionLabel} ${styles.novote}`}>
+                      <Icon
+                        icon="mdi:cancel"
+                        width={18}
+                        height={18}
+                        className={styles.optionIcon}
+                      />{" "}
+                      No with Vote
+                    </span>
+                  </label>
+                </div>
+                <div className={styles.metadataSection}>
+                  <label
+                    htmlFor="voteMetadata"
+                    className={styles.metadataLabel}
+                  >
+                    Vote Comment (Optional):
+                  </label>
+                  <textarea
+                    id="voteMetadata"
+                    className={styles.metadataInput}
+                    value={voteMetadata}
+                    onChange={(e) => setVoteMetadata(e.target.value)}
+                    placeholder="Add a comment about your vote..."
+                    rows={3}
+                    disabled={isLoading}
+                  />
+                </div>
+                <button
+                  className={styles.submitVoteButton}
+                  type="submit"
+                  disabled={selectedVote === null || isLoading}
+                >
+                  {isLoading ? (
+                    <span className={styles.loadingContent}>
+                      <span className={styles.spinner}></span> Submitting...
+                    </span>
+                  ) : hasVoted ? (
+                    <>
+                      <Icon icon="mdi:refresh" width={16} height={16} /> Vote
+                      Again
+                    </>
+                  ) : (
+                    <>
+                      <Icon icon="mdi:send" width={16} height={16} /> Submit
+                      Vote
+                    </>
+                  )}
+                </button>
+              </form>
+            </>
           )}
         </div>
       )}

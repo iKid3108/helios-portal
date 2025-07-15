@@ -123,6 +123,30 @@
   margin-right: 0.5rem;
 }
 
+.voteOption input[type="radio"]:checked + .optionLabel.yes {
+  border-color: #38a169;
+  background: #f0fff4;
+  color: #22543d;
+}
+
+.voteOption input[type="radio"]:checked + .optionLabel.no {
+  border-color: #e53e3e;
+  background: #fffafa;
+  color: #742a2a;
+}
+
+.voteOption input[type="radio"]:checked + .optionLabel.abstain {
+  border-color: #d69e2e;
+  background: #fffbeb;
+  color: #744210;
+}
+
+.voteOption input[type="radio"]:checked + .optionLabel.novote {
+  border-color: #9f7aea;
+  background: #faf5ff;
+  color: #44337a;
+}
+
 .metadataSection {
   display: flex;
   flex-direction: column;
@@ -315,6 +339,23 @@
         display: flex;
       }
     }
+  }
+}
+
+.voteConfirmation {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: #c6f6d5;
+  border: 1px solid #38a169;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  color: #22543d;
+  font-weight: 500;
+
+  .confirmationIcon {
+    color: #38a169;
   }
 }
 

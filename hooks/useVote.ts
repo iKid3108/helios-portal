@@ -137,6 +137,7 @@ export const useVote = () => {
     option: number,
     metadata: string = ""
   ) => {
+    console.log("vote-option", proposalId, option, metadata)
     try {
       await voteMutation.mutateAsync({
         proposalId,
