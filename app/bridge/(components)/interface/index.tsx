@@ -46,8 +46,7 @@ export const Interface = () => {
     txInProgress,
     sendToChain,
     sendToHelios,
-    feedback: bridgeFeedback,
-    resetFeedback
+    feedback: bridgeFeedback
   } = useBridge()
   const { switchChain } = useSwitchChain()
   const { address } = useAccount()
