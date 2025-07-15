@@ -14,7 +14,10 @@ export const APP_BASE_URL =
 
 export const HELIOS_NETWORK_ID = 42000
 
-export const RPC_URL = "https://testnet1.helioschainlabs.org"
+// Import the getRpcUrl function from the rpc.ts file when using RPC_URL
+// This is a placeholder for static imports
+export const RPC_URL = "RPC_URL" // This will be replaced dynamically at runtime
+export const RPC_URL_DEFAULT = "https://testnet1.helioschainlabs.org"
 export const RPC_URL_OLD = "https://helios.ethereum.rpc.sotatek.works"
 export const CDN_URL = "http://testnet1.helioschainlabs.org:8547"
 export const EXPLORER_URL = "https://explorer.helioschainlabs.org"

@@ -1,0 +1,366 @@
+// voting-section.module.scss
+
+.votingSection {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 1.25rem;
+  box-shadow: 0 2px 8px 0 rgba(16, 30, 54, 0.04);
+  padding: 2.5rem 2rem 2rem 2rem;
+  margin: 2rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+
+  @media (max-width: 600px) {
+    padding: 1.25rem 0.5rem;
+    gap: 1.25rem;
+  }
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: #1a202c;
+}
+
+.walletInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #e6fffa;
+  border: 1px solid #38b2ac;
+  border-radius: 8px;
+  color: #234e52;
+  font-size: 0.95rem;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.voteForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.voteOptions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+
+  @media (max-width: 700px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.voteOption {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.optionLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  justify-content: center;
+  padding: 1rem 0;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f9fafb;
+  font-weight: 600;
+  font-size: 1.05rem;
+  cursor: pointer;
+  transition: border 0.2s, background 0.2s, color 0.2s;
+
+  &:hover {
+    border-color: #3182ce;
+    background: #e6f0fa;
+  }
+
+  &.yes {
+    &:hover,
+    &.selected {
+      border-color: #38a169;
+      background: #f0fff4;
+      color: #22543d;
+    }
+  }
+  &.no {
+    &:hover,
+    &.selected {
+      border-color: #e53e3e;
+      background: #fffafa;
+      color: #742a2a;
+    }
+  }
+  &.abstain {
+    &:hover,
+    &.selected {
+      border-color: #d69e2e;
+      background: #fffbeb;
+      color: #744210;
+    }
+  }
+  &.novote {
+    &:hover,
+    &.selected {
+      border-color: #9f7aea;
+      background: #faf5ff;
+      color: #44337a;
+    }
+  }
+}
+
+.voteOption input[type="radio"] {
+  accent-color: #3182ce;
+  margin-right: 0.5rem;
+}
+
+.voteOption input[type="radio"]:checked + .optionLabel.yes {
+  border-color: #38a169;
+  background: #f0fff4;
+  color: #22543d;
+}
+
+.voteOption input[type="radio"]:checked + .optionLabel.no {
+  border-color: #e53e3e;
+  background: #fffafa;
+  color: #742a2a;
+}
+
+.voteOption input[type="radio"]:checked + .optionLabel.abstain {
+  border-color: #d69e2e;
+  background: #fffbeb;
+  color: #744210;
+}
+
+.voteOption input[type="radio"]:checked + .optionLabel.novote {
+  border-color: #9f7aea;
+  background: #faf5ff;
+  color: #44337a;
+}
+
+.metadataSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.metadataLabel {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #2d3748;
+  margin-bottom: 0.25rem;
+}
+
+.metadataInput {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: 0.75rem 1.5rem 0.75rem 1rem;
+  font-size: 1rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f9fafb;
+  resize: vertical;
+  transition: border 0.2s;
+
+  &:focus {
+    border-color: #3182ce;
+    outline: none;
+    background: #fff;
+  }
+}
+
+.submitVoteButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: fit-content;
+  min-width: 180px;
+  align-self: flex-end;
+  padding: 0.85rem 2.25rem;
+  font-size: 1.08rem;
+  font-weight: 700;
+  border-radius: 10px;
+  border: none;
+  background: #3182ce;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 1px 4px 0 rgba(49, 130, 206, 0.08);
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+
+  &:hover:not(:disabled) {
+    background: #2563eb;
+    color: #fff;
+    box-shadow: 0 2px 8px 0 rgba(49, 130, 206, 0.12);
+  }
+  &:disabled {
+    background: #cbd5e1;
+    color: #fff;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+}
+
+.statusMessage {
+  padding: 1rem;
+  background: #fed7d7;
+  border: 1px solid #fc8181;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  p {
+    margin: 0;
+    color: #742a2a;
+    font-weight: 500;
+  }
+}
+
+.transactionMessage {
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+
+  p {
+    margin: 0;
+    font-weight: 500;
+  }
+
+  &.loading {
+    background: #bee3f8;
+    border: 1px solid #3182ce;
+
+    p {
+      color: #1a365d;
+    }
+  }
+
+  &.success {
+    background: #c6f6d5;
+    border: 1px solid #38a169;
+
+    p {
+      color: #22543d;
+    }
+  }
+
+  &.error {
+    background: #fed7d7;
+    border: 1px solid #e53e3e;
+
+    p {
+      color: #742a2a;
+    }
+  }
+}
+
+.walletPrompt {
+  text-align: center;
+  padding: 3rem 2rem;
+
+  .promptContent {
+    max-width: 300px;
+    margin: 0 auto;
+  }
+
+  .promptIcon {
+    font-size: 1.5rem;
+    margin-bottom: 0;
+  }
+
+  .promptTitle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #2d3748;
+  }
+
+  .promptText {
+    color: #4a5568;
+    line-height: 1.5;
+    margin: 0;
+  }
+}
+
+.connectedWallet {
+  .walletInfo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    padding: 0.75rem 1rem;
+    background: #e6fffa;
+    border: 1px solid #38b2ac;
+    border-radius: 8px;
+    color: #234e52;
+    font-size: 0.9rem;
+
+    .walletIndicator {
+      font-size: 1rem;
+    }
+
+    .address {
+      font-family: monospace;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.7);
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+    }
+
+    .displayAddress1 {
+      display: flex;
+    }
+
+    .displayAddress2 {
+      display: none;
+    }
+
+    @media (max-width: 550px) {
+      .displayAddress1 {
+        display: none;
+      }
+      .displayAddress2 {
+        display: flex;
+      }
+    }
+  }
+}
+
+.voteConfirmation {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: #c6f6d5;
+  border: 1px solid #38a169;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  color: #22543d;
+  font-weight: 500;
+
+  .confirmationIcon {
+    color: #38a169;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
