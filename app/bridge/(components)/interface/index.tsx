@@ -27,6 +27,7 @@ import { useChains } from "@/hooks/useChains"
 import { ModalWrapper } from "../wrapper/modal"
 import { useWrapper } from "@/hooks/useWrapper"
 import { getChainConfig } from "@/config/chain-config"
+import { getErrorMessage } from "@/utils/string"
 
 type BridgeForm = {
   asset: string | null
@@ -97,7 +98,8 @@ export const Interface = () => {
   })
 
   const tokensByChain = qEnrichedTokensByChain.data || []
-  const estimatedFees = (parseFloat(form.amount) / 100).toString()
+  // const estimatedFees = (parseFloat(form.amount) / 100).toString()
+  const estimatedFees = "0.5"
   const isDeposit = heliosChainIndex
     ? form.to?.chainId === chains[heliosChainIndex].chainId
     : false
@@ -120,8 +122,14 @@ export const Interface = () => {
     setOpenChain(true)
   }
 
-  const handleChangeChain = (chain: HyperionChain, forceChainType?: "from" | "to") => {
-    if ((chainType === 'from' || forceChainType === "from") && chain.chainId !== form.from?.chainId) {
+  const handleChangeChain = (
+    chain: HyperionChain,
+    forceChainType?: "from" | "to"
+  ) => {
+    if (
+      (chainType === "from" || forceChainType === "from") &&
+      chain.chainId !== form.from?.chainId
+    ) {
       switchChain({ chainId: chain.chainId })
       setOpenChain(false)
 
@@ -139,7 +147,7 @@ export const Interface = () => {
 
   const handleSwap = () => {
     if (form.to) {
-      handleChangeChain(form.to, 'from')
+      handleChangeChain(form.to, "from")
     }
   }
 
@@ -235,7 +243,7 @@ export const Interface = () => {
 
       lightResetForm()
     } catch (err: any) {
-      toast.error(err?.message || "Failed to send bridge transaction.", {
+      toast.error(getErrorMessage(err) || "Failed to send bridge transaction.", {
         id: toastId
       })
     }
@@ -544,8 +552,9 @@ export const Interface = () => {
                   "No Fees"
                 ) : (
                   <>
-                    <small>~1% =</small>
-                    {estimatedFees} {tokenInfo.data?.symbol}
+                    {/* <small>~1% =</small> */}
+                    {/* {estimatedFees} {tokenInfo.data?.symbol} */}
+                    {estimatedFees} HLS
                   </>
                 )}
               </strong>

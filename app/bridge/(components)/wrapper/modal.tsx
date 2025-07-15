@@ -10,6 +10,7 @@ import { useWrapper } from "@/hooks/useWrapper"
 import { getChainConfig } from "@/config/chain-config"
 import { useChainId } from "wagmi"
 import s from "./modal.module.scss"
+import { getErrorMessage } from '@/utils/string';
 
 interface ModalWrapperProps {
   title: string
@@ -46,7 +47,7 @@ export const ModalWrapper = ({
         setTokenChange({ target: { value: chainConfig?.wrapperContract } })
       }
     } catch (err: any) {
-      toast.error(err?.message || `Error during ${type}`, {
+      toast.error(getErrorMessage(err) || `Error during ${type}`, {
         id: toastId
       })
     }

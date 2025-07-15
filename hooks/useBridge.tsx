@@ -22,7 +22,7 @@ import { getBestGasPrice } from "@/lib/utils/gas"
 import { useTokenRegistry } from "./useTokenRegistry"
 import { TransactionLight } from "@/types/transaction"
 import { Feedback } from "@/types/feedback"
-import { HELIOS_NETWORK_ID } from "@/config/app"
+import { HELIOS_NETWORK_ID, HELIOS_TOKEN_ADDRESS } from "@/config/app"
 import { useChains } from "./useChains"
 
 export const useBridge = () => {
@@ -118,7 +118,8 @@ export const useBridge = () => {
     decimals: number
   ) => {
     const amount = ethers.parseUnits(readableAmount, decimals)
-    const fees = ethers.parseUnits(readableFees, decimals)
+    // const fees = ethers.parseUnits(readableFees, decimals)
+    const fees = ethers.parseEther(readableFees)
     return sendToChainMutation.mutateAsync({
       chainId,
       receiverAddress,
@@ -154,7 +155,9 @@ export const useBridge = () => {
           .allowance(address, BRIDGE_CONTRACT_ADDRESS)
           .call()
         const currentAllowance = BigInt(currentAllowanceStr)
-        const totalAmount = amount + fees
+        // const totalAmount = amount + fees
+        const totalAmount =
+          tokenAddress === HELIOS_TOKEN_ADDRESS ? amount + fees : amount
 
         if (currentAllowance < totalAmount) {
           setFeedback({
