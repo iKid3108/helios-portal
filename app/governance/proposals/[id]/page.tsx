@@ -4,6 +4,7 @@ import { request } from "@/helpers/request"
 import { truncateAddress } from "@/lib/utils"
 import { notFound } from "next/navigation"
 import { VotingSection } from "../../(components)/voting-section"
+import { DelegationWrapper } from "./delegation-wrapper"
 import { Icon } from "@/components/icon"
 import { Link } from "@/components/link"
 import styles from "./proposal.module.scss"
@@ -173,6 +174,8 @@ export default async function ProposalDetail({
                   </span>
                 </div>
               </div>
+              {/* Delegation Information - Show voting power first */}
+              <DelegationWrapper />
               {/* Enhanced Voting Section */}
               <div className={styles.votingSectionWrapper}>
                 <VotingSection

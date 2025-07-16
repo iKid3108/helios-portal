@@ -86,7 +86,6 @@ export const Dropdown = ({
       className={clsx(s.dropdown, className)}
       role="menu"
       aria-label={ariaLabel}
-      aria-expanded={isOpen}
     >
       {cloneElement(opener, {
         // @ts-expect-error - handle on clone not updated ts
