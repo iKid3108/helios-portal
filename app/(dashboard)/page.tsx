@@ -27,7 +27,7 @@ export default function Page() {
           <Stat
             icon="hugeicons:blockchain-02"
             label="Block Height"
-            value={formatNumber(lastBlockNumber)}
+            value={formatNumber(lastBlockNumber, 0)}
             left="#"
           />
         </Area>

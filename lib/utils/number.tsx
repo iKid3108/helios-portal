@@ -36,6 +36,12 @@ export const formatCurrency = (
 }
 
 export function formatNumber(number: number, decimals?: number): string {
+  if (decimals === 0) {
+    return number.toLocaleString("en-US", {
+      useGrouping: true
+    })
+  }
+
   const safeDecimals = Math.min(Math.max(decimals ?? 2, 0), 20)
 
   return number.toLocaleString("en-US", {
