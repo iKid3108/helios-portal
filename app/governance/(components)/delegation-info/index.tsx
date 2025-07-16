@@ -158,11 +158,11 @@ export function DelegationInfo({
     return (
       <div className={styles.delegationSection}>
         <h3 className={styles.sectionTitle}>
-          <Icon icon="mdi:vote-outline" width={20} height={20} />
+          <Icon icon="mdi:lightning-bolt" width={20} height={20} />
           Your Voting Power
         </h3>
         <div className={styles.emptyState}>
-          <Icon icon="mdi:vote-off-outline" width={48} height={48} />
+          <Icon icon="mdi:lightning-bolt-outline" width={48} height={48} />
           <p>No voting power</p>
           <span>
             You haven&apos;t delegated to any validators yet. Delegate tokens to
@@ -184,7 +184,7 @@ export function DelegationInfo({
   return (
     <div className={styles.delegationSection}>
       <h3 className={styles.sectionTitle}>
-        <Icon icon="mdi:vote-outline" width={20} height={20} />
+        <Icon icon="mdi:lightning-bolt" width={20} height={20} />
         Your Voting Power
       </h3>
 
