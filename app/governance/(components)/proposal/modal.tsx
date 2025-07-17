@@ -20,7 +20,7 @@ export const ModalProposal = ({ open, onClose }: ModalProposalProps) => {
   const [proposalType, setProposalType] = useState<string>("")
   const [proposalTitle, setProposalTitle] = useState<string>("")
   const [proposalDescription, setProposalDescription] = useState<string>("")
-  const [initialDeposit, setInitialDeposit] = useState<number>(100)
+  const [initialDeposit, setInitialDeposit] = useState<number>(1)
   const [denom, setDenom] = useState<string>("")
   const [magnitude, setMagnitude] = useState<string>("")
   const [direction, setDirection] = useState<string>("")
@@ -171,8 +171,8 @@ export const ModalProposal = ({ open, onClose }: ModalProposalProps) => {
           type="number"
           value={initialDeposit}
           onChange={(e) => setInitialDeposit(Number(e.target.value))}
-          min={100}
-          helperText="Minimum deposit: 100 HLS. This deposit will be returned if the proposal reaches quorum."
+          min={1}
+          helperText="Minimum deposit: 1 HLS. This deposit will be returned if the proposal reaches quorum."
         />
 
         {showBlockchainFeedback && (
