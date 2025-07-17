@@ -4,6 +4,7 @@ import { Area, Grid } from "@/components/grid"
 import { Apy } from "./(components)/apy"
 // import { Delegator } from "./(components)/delegator"
 // import { Governance } from "./(components)/governance"
+import { Hyperion } from "./(components)/hyperion"
 // import { Performance } from "./(components)/performance"
 import { Staking } from "./(components)/staking"
 import { Top } from "./(components)/top"
@@ -41,6 +42,7 @@ export default function Page() {
       <Grid className={s.content}>
         <Area area="a">
           <Apy />
+          <Hyperion />
           {/* <Governance /> */}
         </Area>
         <Area area="b">

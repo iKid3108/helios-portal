@@ -1,0 +1,225 @@
+@use "styles/mixins" as *;
+
+.loading,
+.noData {
+  padding: var(--size-6);
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: var(--size-4);
+}
+
+.summary {
+  display: flex;
+  gap: var(--size-6);
+  margin-bottom: var(--size-2);
+
+  @include max(768px) {
+    flex-direction: column;
+    gap: var(--size-4);
+  }
+}
+
+.stat {
+  flex: 1;
+  background-color: var(--background-lower);
+  border-radius: var(--radius-m);
+  padding: var(--size-5);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-2);
+}
+
+.statLabel {
+  font-size: var(--size-3-5);
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.statValue {
+  font-size: var(--size-6);
+  font-weight: bold;
+  color: var(--text-primary);
+
+  &.slashValue {
+    color: #0e1ce0;
+  }
+
+  &.trustScoreExcellent {
+    color: #22c55e; // Green (90-100)
+  }
+
+  &.trustScoreGood {
+    color: #3b82f6; // Blue (75-89)
+  }
+
+  &.trustScoreFair {
+    color: #f59e0b; // Orange (50-74)
+  }
+
+  &.trustScorePoor {
+    color: #ef4444; // Red (0-49)
+  }
+}
+
+.statIcon {
+  position: absolute;
+  top: var(--size-5);
+  right: var(--size-5);
+  width: var(--size-6);
+  height: var(--size-6);
+  color: var(--text-tertiary);
+
+  &.slashIcon {
+    color: #0b18d3; // Blue color
+  }
+
+  &.trustIcon {
+    color: #ec48c3; // Pink color
+  }
+}
+
+.trustBadge {
+  display: flex;
+  align-items: center;
+  gap: var(--size-3);
+  background-color: rgba(34, 197, 94, 0.15);
+  color: rgb(22, 163, 74);
+  padding: var(--size-4) var(--size-5);
+  border-radius: var(--radius-m);
+  font-size: var(--size-4);
+  font-weight: 500;
+  margin-bottom: var(--size-2);
+  width: 100%;
+  border: 1px solid rgba(34, 197, 94, 0.2);
+
+  svg {
+    width: var(--size-5);
+    height: var(--size-5);
+  }
+}
+
+.table {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-2);
+}
+
+.tableHeader {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: var(--size-4);
+  padding: var(--size-4);
+  margin-bottom: var(--size-1);
+  background-color: var(--background-lower);
+  border-radius: var(--radius-m);
+
+  @include max(768px) {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--size-2);
+    padding: var(--size-4);
+  }
+}
+
+.headerCell {
+  font-size: var(--size-3-5);
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.tableRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: var(--size-5);
+  align-items: center;
+  background-color: var(--background-lower);
+  border-radius: var(--radius-m);
+  padding: var(--size-3);
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: var(--background-medium);
+  }
+
+  @include max(768px) {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--size-2);
+    padding: var(--size-4);
+  }
+}
+
+.cell {
+  display: flex;
+  align-items: center;
+  font-size: var(--size-4);
+
+  @include max(768px) {
+    font-size: var(--size-3-5);
+  }
+}
+
+.hyperionName {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.network {
+  display: flex;
+  align-items: center;
+  gap: var(--size-3);
+
+  span {
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+}
+
+.networkIcon {
+  width: var(--size-5);
+  height: var(--size-5);
+  border-radius: var(--radius-full);
+  color: var(--network-color, var(--text-primary));
+}
+
+.slashCount {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.transferCount {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+// Mobile responsive adjustments
+@include max(768px) {
+  .tableHeader {
+    .headerCell:nth-child(3),
+    .headerCell:nth-child(4) {
+      display: none;
+    }
+  }
+
+  .tableRow {
+    .cell:nth-child(3),
+    .cell:nth-child(4) {
+      display: none;
+    }
+  }
+
+  // Show additional info in mobile layout
+  .tableRow {
+    position: relative;
+
+    &::after {
+      content: attr(data-transfers) " transfers, " attr(data-slashes) " slashes";
+      position: absolute;
+      bottom: var(--size-2);
+      left: var(--size-4);
+      font-size: var(--size-3);
+      color: var(--text-tertiary);
+    }
+  }
+}
