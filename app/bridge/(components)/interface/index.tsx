@@ -438,7 +438,8 @@ export const Interface = () => {
                               height={16}
                             />
                             {!failedChainIcons.has(token.originBlockchain) && (
-                              <Image
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
                                 src={getOriginChainIconUrl(token.originBlockchain)}
                                 alt=""
                                 width={12}
@@ -456,7 +457,8 @@ export const Interface = () => {
                               className={s.tokenIcon}
                             />
                             {!failedChainIcons.has(token.originBlockchain) && (
-                              <Image
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
                                 src={getOriginChainIconUrl(token.originBlockchain)}
                                 alt=""
                                 width={12}
