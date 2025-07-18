@@ -6,7 +6,7 @@ import {
 } from "@/constant/helios-contracts"
 import { useState } from "react"
 import { useWeb3Provider } from "./useWeb3Provider"
-import { ethers } from "ethers"
+import { ethers, TransactionReceipt } from "ethers"
 import { getErrorMessage } from "@/utils/string"
 import { Feedback } from "@/types/feedback"
 
@@ -44,15 +44,10 @@ export const useDelegate = () => {
           DELEGATE_CONTRACT_ADDRESS
         )
 
+        // simulate the transaction
         await contract.methods
           .delegate(address, validatorAddress, delegateAmount, symbol)
           .call({
-            from: address
-          })
-
-        const tx = await contract.methods
-          .delegate(address, validatorAddress, delegateAmount, symbol)
-          .send({
             from: address
           })
 
@@ -61,9 +56,21 @@ export const useDelegate = () => {
           message: `Transaction sent, waiting for confirmation...`
         })
 
-        const receipt = await web3Provider.eth.getTransactionReceipt(
-          tx.transactionHash
-        )
+        // send the transaction
+        const receipt = await new Promise<TransactionReceipt>((resolve, reject) => {
+          web3Provider.eth.sendTransaction({
+            from: address,
+            to: DELEGATE_CONTRACT_ADDRESS,
+            data: contract.methods.delegate(address, validatorAddress, delegateAmount, symbol).encodeABI()
+
+          }).then((tx) => {
+            console.log("tx", tx.transactionHash)
+            resolve(tx as any)
+          }).catch((error) => {
+            console.log("error", error)
+            reject(error)
+          })
+        })
 
         return receipt
       } catch (error: any) {
@@ -101,15 +108,11 @@ export const useDelegate = () => {
           delegateAbi,
           DELEGATE_CONTRACT_ADDRESS
         )
+
+        // simulate the transaction
         await contract.methods
           .undelegate(address, validatorAddress, undelegateAmount, symbol)
           .call({
-            from: address
-          })
-
-        const tx = await contract.methods
-          .undelegate(address, validatorAddress, undelegateAmount, symbol)
-          .send({
             from: address
           })
 
@@ -118,9 +121,18 @@ export const useDelegate = () => {
           message: `Transaction sent, waiting for confirmation...`
         })
 
-        const receipt = await web3Provider.eth.getTransactionReceipt(
-          tx.transactionHash
-        )
+        // send the transaction
+        const receipt = await new Promise<TransactionReceipt>((resolve, reject) => {
+          web3Provider.eth.sendTransaction({
+            from: address,
+            to: DELEGATE_CONTRACT_ADDRESS,
+            data: contract.methods.undelegate(address, validatorAddress, undelegateAmount, symbol).encodeABI()
+          }).then((tx) => {
+            resolve(tx as any)
+          }).catch((error) => {
+            reject(error)
+          })
+        })
 
         return receipt
       } catch (error: any) {
