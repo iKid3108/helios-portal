@@ -13,7 +13,7 @@ import { toast } from "sonner"
 import s from "./interface.module.scss"
 import { useBridge } from "@/hooks/useBridge"
 import { HyperionChain } from "@/types/hyperion"
-import { getLogoByHash } from "@/utils/url"
+import { getLogoByHash, getChainIcon } from "@/utils/url"
 import { useAccount, useChainId, useSwitchChain } from "wagmi"
 // import { TokenDenom } from "@/types/denom"
 import { useTokenInfo } from "@/hooks/useTokenInfo"
@@ -28,6 +28,7 @@ import { ModalWrapper } from "../wrapper/modal"
 import { useWrapper } from "@/hooks/useWrapper"
 import { getChainConfig } from "@/config/chain-config"
 import { getErrorMessage } from "@/utils/string"
+import { useWhitelistedAssets } from "@/hooks/useWhitelistedAssets"
 
 type BridgeForm = {
   asset: string | null
@@ -42,6 +43,7 @@ export const Interface = () => {
   const chainId = useChainId()
   const { isWrappable } = useWrapper()
   const { chains, heliosChainIndex } = useChains()
+  const { assets, isLoading: whitelistedAssetsLoading } = useWhitelistedAssets()
   const {
     txInProgress,
     sendToChain,
@@ -61,6 +63,7 @@ export const Interface = () => {
     address: address || "",
     inProgress: false
   })
+  const [failedChainIcons, setFailedChainIcons] = useState<Set<string>>(new Set())
   const tokenInfo = useTokenInfo(form.asset)
   const { getTokenByAddress } = useTokenRegistry()
   const chainConfig = chainId ? getChainConfig(chainId) : undefined
@@ -107,6 +110,34 @@ export const Interface = () => {
     chainType === "to"
       ? chains.filter((chain) => chain.chainId !== form.from?.chainId)
       : chains
+
+  // Function to check if a token is whitelisted
+  const isTokenWhitelisted = (tokenAddress: string): boolean => {
+    // Don't show stars while loading whitelisted assets
+    if (whitelistedAssetsLoading) return false
+    
+    const isWhitelisted = assets.some((asset) => 
+      asset.contractAddress.toLowerCase() === tokenAddress.toLowerCase()
+    )
+    
+    // Debug: log whitelisted tokens
+    if (isWhitelisted) {
+      console.log('Whitelisted token found:', tokenAddress)
+    }
+    
+    return isWhitelisted
+  }
+
+  // Function to get origin chain icon URL
+  const getOriginChainIconUrl = (originBlockchain: string) => {
+    const chainId = parseInt(originBlockchain)
+    return getChainIcon(chainId)
+  }
+
+  // Function to handle chain icon load error
+  const handleChainIconError = (originBlockchain: string) => {
+    setFailedChainIcons(prev => new Set(prev).add(originBlockchain))
+  }
 
   const lightResetForm = useCallback(() => {
     setForm((prevForm) => ({
@@ -397,15 +428,50 @@ export const Interface = () => {
                         })
                       }
                     >
-                      {token.display.logo !== "" && (
-                        <Image
-                          src={token.display.logo}
-                          alt=""
-                          width={16}
-                          height={16}
-                        />
+                      <div className={s.tokenContainer}>
+                        {token.display.logo !== "" && (
+                          <div className={s.tokenIconWrapper}>
+                            <Image
+                              src={token.display.logo}
+                              alt=""
+                              width={16}
+                              height={16}
+                            />
+                            {!failedChainIcons.has(token.originBlockchain) && (
+                              <Image
+                                src={getOriginChainIconUrl(token.originBlockchain)}
+                                alt=""
+                                width={12}
+                                height={12}
+                                className={s.originChainIcon}
+                                onError={() => handleChainIconError(token.originBlockchain)}
+                              />
+                            )}
+                          </div>
+                        )}
+                        {token.display.logo === "" && (
+                          <div className={s.tokenIconWrapper}>
+                            <Icon 
+                              icon={token.display.symbolIcon} 
+                              className={s.tokenIcon}
+                            />
+                            {!failedChainIcons.has(token.originBlockchain) && (
+                              <Image
+                                src={getOriginChainIconUrl(token.originBlockchain)}
+                                alt=""
+                                width={12}
+                                height={12}
+                                className={s.originChainIcon}
+                                onError={() => handleChainIconError(token.originBlockchain)}
+                              />
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      {token.display.symbol.toUpperCase()} - {token.originBlockchain}
+                      {isTokenWhitelisted(token.functionnal.address) && (
+                        <span className={s.whitelistedIcon}>⭐</span>
                       )}
-                      {token.display.symbol.toUpperCase()}
                     </Button>
                   ))}
                 </div>

@@ -57,6 +57,7 @@ export interface TokenExtended {
     holdersCount: number
     totalSupply: string
   }
+  originBlockchain: string
 }
 
 export interface TokenMetadataResponse {

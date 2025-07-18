@@ -58,6 +58,15 @@ export const useTokenRegistry = () => {
         const cgToken = cgData[symbol]
         const unitPrice = cgToken?.price || 0
 
+        let originBlockchain = "42000";
+
+        for (const chainMetadata of data.metadata.chainsMetadatas) {
+          if (chainMetadata.isOriginated) {
+            originBlockchain = `${chainMetadata.chainId}`;
+            break
+          }
+        }
+
         const newToken: TokenExtended = {
           display: {
             name: data.metadata.name,
@@ -83,7 +92,8 @@ export const useTokenRegistry = () => {
           stats: {
             holdersCount: data.holdersCount,
             totalSupply: data.total_supply
-          }
+          },
+          originBlockchain: originBlockchain
         }
 
         setTokens((prev) => [...prev, newToken])

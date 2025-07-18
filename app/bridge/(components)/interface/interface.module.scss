@@ -400,12 +400,55 @@ $responsiveSwap: 800px;
     align-items: center;
     flex-wrap: wrap;
     gap: 8px;
+
+    button {
+      position: relative;
+    }
   }
 
   &Label {
     font-size: var(--size-4);
     color: var(--text-secondary);
   }
+}
+
+.whitelistedIcon {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  color: var(--warning-medium);
+  font-size: 12px;
+  z-index: 1;
+}
+
+.tokenContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tokenIconWrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tokenIcon {
+  width: 16px;
+  height: 16px;
+}
+
+.originChainIcon {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 12px;
+  height: 12px;
+  background-color: var(--background-low);
+  border-radius: 50%;
+  padding: 1px;
+  border: 1px solid var(--background-medium);
 }
 
 .wrap {
