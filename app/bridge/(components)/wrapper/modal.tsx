@@ -14,7 +14,7 @@ import { getErrorMessage } from '@/utils/string';
 
 interface ModalWrapperProps {
   title: string
-  type: "wrap"
+  type: "wrap" | "unwrap"
   open: boolean
   setOpen: (open: boolean) => void
   setTokenChange: (e: { target: { value: string } }) => void
@@ -28,7 +28,10 @@ export const ModalWrapper = ({
   setTokenChange
 }: ModalWrapperProps) => {
   const [amount, setAmount] = useState("0")
-  const { wrap, feedback, resetFeedback, balance } = useWrapper()
+  const { wrap, unwrap, feedback, resetFeedback, balance, wrappedBalance } = useWrapper({
+    enableNativeBalance: type === "wrap",
+    enableWrappedBalance: type === "unwrap"
+  })
   const chainId = useChainId()
   const chainConfig = chainId ? getChainConfig(chainId) : undefined
 
@@ -37,13 +40,17 @@ export const ModalWrapper = ({
     try {
       resetFeedback()
 
-      await wrap(amount)
+      if (type === "wrap") {
+        await wrap(amount)
+      } else {
+        await unwrap(amount)
+      }
 
       toast.success(`${type === "wrap" ? "Wrap" : "Unwrap"} successful!`, {
         id: toastId
       })
       setAmount("0")
-      if (chainConfig && chainConfig.wrapperContract) {
+      if (type === "wrap" && chainConfig && chainConfig.wrapperContract) {
         setTokenChange({ target: { value: chainConfig?.wrapperContract } })
       }
     } catch (err: any) {
@@ -70,7 +77,8 @@ export const ModalWrapper = ({
   }
 
   const amountNb = parseFloat(amount)
-  const isDisabled = amountNb <= 0 || amountNb > parseFloat(balance || "0")
+  const currentBalance = type === "wrap" ? balance : wrappedBalance
+  const isDisabled = amountNb <= 0 || amountNb > parseFloat(currentBalance || "0")
 
   return (
     <Modal
@@ -85,9 +93,9 @@ export const ModalWrapper = ({
         type="text"
         value={amount}
         onChange={handleAmountChange}
-        balance={parseFloat(balance || "0")}
+        balance={parseFloat(currentBalance || "0")}
         showMaxButton
-        onMaxClick={() => setAmount(balance || "0")}
+        onMaxClick={() => setAmount(currentBalance || "0")}
       />
 
       <div className={s.actions}>

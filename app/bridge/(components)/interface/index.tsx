@@ -42,7 +42,6 @@ type BridgeForm = {
 
 export const Interface = () => {
   const chainId = useChainId()
-  const { isWrappable } = useWrapper()
   const { chains, heliosChainIndex } = useChains()
   const { assets, isLoading: whitelistedAssetsLoading } = useWhitelistedAssets()
   const {
@@ -56,7 +55,13 @@ export const Interface = () => {
   const [openChain, setOpenChain] = useState(false)
   const [chainType, setChainType] = useState<"from" | "to">("from")
   const [openWrapModal, setOpenWrapModal] = useState(false)
+  const [openUnwrapModal, setOpenUnwrapModal] = useState(false)
   const [openTokenSearch, setOpenTokenSearch] = useState(false)
+  
+  const { isWrappable } = useWrapper({
+    enableNativeBalance: openWrapModal,
+    enableWrappedBalance: openUnwrapModal
+  })
   const [form, setForm] = useState<BridgeForm>({
     asset: null,
     from: null,
@@ -417,6 +422,13 @@ export const Interface = () => {
                   >
                     Wrap
                   </Button>
+                  <Button
+                    variant="warning"
+                    size="xsmall"
+                    onClick={() => setOpenUnwrapModal(true)}
+                  >
+                    Unwrap
+                  </Button>
                 </div>
               </div>
             )}
@@ -751,6 +763,13 @@ export const Interface = () => {
         type="wrap"
         open={openWrapModal}
         setOpen={setOpenWrapModal}
+        setTokenChange={handleTokenSearchChange}
+      />
+      <ModalWrapper
+        title="Unwrap Token"
+        type="unwrap"
+        open={openUnwrapModal}
+        setOpen={setOpenUnwrapModal}
         setTokenChange={handleTokenSearchChange}
       />
       <TokenSearchModal
