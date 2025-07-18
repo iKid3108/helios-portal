@@ -101,7 +101,7 @@ export function Modal({
       >
         {closeButton && (
           <Button
-            icon="hugeicons:cancel-01"
+            icon="mdi:close"
             onClick={handleClose}
             variant="secondary"
             size="xsmall"

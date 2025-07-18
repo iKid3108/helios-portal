@@ -29,6 +29,7 @@ import { useWrapper } from "@/hooks/useWrapper"
 import { getChainConfig } from "@/config/chain-config"
 import { getErrorMessage } from "@/utils/string"
 import { useWhitelistedAssets } from "@/hooks/useWhitelistedAssets"
+import { TokenSearchModal } from "./token-search-modal"
 
 type BridgeForm = {
   asset: string | null
@@ -55,6 +56,7 @@ export const Interface = () => {
   const [openChain, setOpenChain] = useState(false)
   const [chainType, setChainType] = useState<"from" | "to">("from")
   const [openWrapModal, setOpenWrapModal] = useState(false)
+  const [openTokenSearch, setOpenTokenSearch] = useState(false)
   const [form, setForm] = useState<BridgeForm>({
     asset: null,
     from: null,
@@ -69,16 +71,18 @@ export const Interface = () => {
   const chainConfig = chainId ? getChainConfig(chainId) : undefined
 
   useEffect(() => {
-    if (!openWrapModal) {
+    if (!openWrapModal && form.asset) {
       tokenInfo.refetch()
     }
-  }, [openWrapModal, tokenInfo])
+  }, [openWrapModal, form.asset, tokenInfo])
 
   const qTokensByChain = useQuery({
     queryKey: ["tokensByChain", form.to?.chainId],
     queryFn: () =>
       getTokensByChainIdAndPageAndSize(form.to!.chainId, toHex(1), toHex(5)),
-    enabled: !!form.to
+    enabled: !!form.to,
+    staleTime: 30000, // 30 seconds
+    refetchOnWindowFocus: false
   })
 
   const qEnrichedTokensByChain = useQuery({
@@ -88,15 +92,19 @@ export const Interface = () => {
       form.from?.chainId
     ],
     queryFn: async () => {
+      // Limit to first 3 tokens to reduce load
+      const tokensToEnrich = qTokensByChain.data!.slice(0, 3)
       const results = await Promise.all(
-        qTokensByChain.data!.map((token) =>
+        tokensToEnrich.map((token) =>
           getTokenByAddress(token.metadata.contract_address, form.from!.chainId)
         )
       )
 
       return results.filter((v) => v !== null)
     },
-    enabled: !!form.from && !!qTokensByChain.data?.length
+    enabled: !!form.from && !!qTokensByChain.data?.length,
+    staleTime: 30000, // 30 seconds
+    refetchOnWindowFocus: false
   })
 
   const tokensByChain = qEnrichedTokensByChain.data || []
@@ -112,7 +120,7 @@ export const Interface = () => {
       : chains
 
   // Function to check if a token is whitelisted
-  const isTokenWhitelisted = (tokenAddress: string): boolean => {
+  const isTokenWhitelisted = useCallback((tokenAddress: string): boolean => {
     // Don't show stars while loading whitelisted assets
     if (whitelistedAssetsLoading) return false
     
@@ -120,31 +128,28 @@ export const Interface = () => {
       asset.contractAddress.toLowerCase() === tokenAddress.toLowerCase()
     )
     
-    // Debug: log whitelisted tokens
-    if (isWhitelisted) {
-      console.log('Whitelisted token found:', tokenAddress)
-    }
-    
     return isWhitelisted
-  }
+  }, [whitelistedAssetsLoading, assets])
 
   // Function to get origin chain icon URL
-  const getOriginChainIconUrl = (originBlockchain: string) => {
+  const getOriginChainIconUrl = useCallback((originBlockchain: string) => {
     const chainId = parseInt(originBlockchain)
     return getChainIcon(chainId)
-  }
+  }, [])
 
   // Function to get origin chain name
-  const getOriginChainName = (originBlockchain: string) => {
+  const getOriginChainName = useCallback((originBlockchain: string) => {
     const chainId = parseInt(originBlockchain)
     const chainConfig = getChainConfig(chainId)
     return chainConfig?.name || `Chain ${chainId}`
-  }
+  }, [])
+
+
 
   // Function to handle chain icon load error
-  const handleChainIconError = (originBlockchain: string) => {
+  const handleChainIconError = useCallback((originBlockchain: string) => {
     setFailedChainIcons(prev => new Set(prev).add(originBlockchain))
-  }
+  }, [])
 
   const lightResetForm = useCallback(() => {
     setForm((prevForm) => ({
@@ -210,6 +215,8 @@ export const Interface = () => {
     const value = e.target.value
     setForm({ ...form, asset: value, amount: "0" })
   }
+
+
 
   const handleAmountChange = (e: ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value
@@ -417,7 +424,15 @@ export const Interface = () => {
               <div className={s.bestTokens}>
                 <div className={s.bestTokensLabel}>Available tokens :</div>
                 <div className={s.bestTokensList}>
-                  {tokensByChain.map((token) => (
+                  <Button
+                      variant="secondary"
+                      size="xsmall"
+                      onClick={() => setOpenTokenSearch(true)}
+                      className={s.searchButton}
+                    >
+                      <Icon icon="hugeicons:search-02" />
+                    </Button>
+                  {tokensByChain.slice(0, 3).map((token) => (
                     <Button
                       iconLeft={
                         token.display.logo === ""
@@ -737,6 +752,18 @@ export const Interface = () => {
         open={openWrapModal}
         setOpen={setOpenWrapModal}
         setTokenChange={handleTokenSearchChange}
+      />
+      <TokenSearchModal
+        open={openTokenSearch}
+        onClose={() => setOpenTokenSearch(false)}
+        tokens={tokensByChain}
+        onTokenSelect={(tokenAddress) => {
+          handleTokenSearchChange({
+            target: {
+              value: tokenAddress
+            }
+          })
+        }}
       />
     </>
   )

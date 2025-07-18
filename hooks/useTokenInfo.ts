@@ -78,7 +78,10 @@ export const useTokenInfo = (tokenAddress: string | null) => {
       return fetchTokenInfo(tokenAddress, chainId, address)
     },
     enabled: !!tokenAddress && !!chainId && !!address,
-    retry: false
+    retry: false,
+    staleTime: 30000, // 30 seconds
+    refetchOnWindowFocus: false,
+    refetchOnMount: false
   })
 
   const isNotFound = query.error?.message === "Token not found"

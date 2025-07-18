@@ -451,6 +451,192 @@ $responsiveSwap: 800px;
   border: 1px solid var(--background-medium);
 }
 
+.searchButton {
+  margin-left: 8px;
+}
+
+.searchContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.searchInput {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.searchField {
+  width: 100%;
+  padding: 12px 40px 12px 16px;
+  border: 1px solid var(--background-medium);
+  border-radius: var(--radius-m);
+  background-color: var(--background-low);
+  font-size: var(--size-4);
+  
+  &:focus {
+    outline: none;
+    border-color: var(--primary-medium);
+  }
+}
+
+.searchIcon {
+  position: absolute;
+  right: 12px;
+  color: var(--text-secondary);
+  width: 16px;
+  height: 16px;
+}
+
+.searchResults {
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.tokenTable {
+  width: 100%;
+  border-collapse: collapse;
+  
+  th {
+    text-align: left;
+    padding: 12px 8px;
+    font-size: var(--size-3-5);
+    color: var(--text-secondary);
+    font-weight: 500;
+    border-bottom: 1px solid var(--background-medium);
+  }
+}
+
+.tokenRow {
+  cursor: pointer;
+  transition: background-color var(--transition-link);
+  
+  &:hover {
+    background-color: var(--background-low);
+  }
+}
+
+.tokenCell {
+  padding: 12px 8px;
+  vertical-align: middle;
+  
+  &:first-child {
+    width: 60px;
+  }
+  
+  &:last-child {
+    width: 60px;
+    text-align: center;
+  }
+}
+
+.tokenInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tokenSymbol {
+  font-weight: 600;
+  font-size: var(--size-4);
+}
+
+.tokenName {
+  font-size: var(--size-3-5);
+  color: var(--text-secondary);
+}
+
+.tokenChain {
+  font-size: var(--size-3);
+  color: var(--text-secondary);
+}
+
+.tokenActions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.tokenLogoWrapper {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.tokenLogo {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+
+.tokenInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.tokenName {
+  font-weight: 600;
+  font-size: var(--size-4);
+  color: var(--text-primary);
+}
+
+.tokenDetails {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--size-3-5);
+  color: var(--text-secondary);
+}
+
+.tokenSymbol {
+  font-weight: 500;
+}
+
+.tokenAddress {
+  font-family: monospace;
+  font-size: var(--size-3);
+}
+
+.tokenActions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.favoriteIcon {
+  width: 20px;
+  height: 20px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  
+  &:hover {
+    color: var(--warning-medium);
+  }
+}
+
+.searchResultItem .originChainIcon {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 16px;
+  height: 16px;
+  background-color: var(--background-low);
+  border-radius: 50%;
+  padding: 1px;
+  border: 1px solid var(--background-medium);
+}
+
+.noResults {
+  text-align: center;
+  padding: 20px;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
 .wrap {
   display: flex;
   align-items: center;
