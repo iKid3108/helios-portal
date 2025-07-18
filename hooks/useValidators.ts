@@ -5,7 +5,19 @@ import { toHex } from "@/utils/number"
 export const useValidators = (page = 1, size = 100) => {
   const qValidators = useQuery({
     queryKey: ["validators", page, size],
-    queryFn: () => getValidatorsByPageAndSize(toHex(page), toHex(size)),
+    queryFn: async () => {
+      const validators = await getValidatorsByPageAndSize(toHex(page), toHex(size))
+      
+      if (!validators) return []
+      
+      // Sort validators: jailed last
+      return validators.sort((a, b) => {
+        // Among non-active, jailed last
+        if (a.jailed && !b.jailed) return 1
+        if (!a.jailed && b.jailed) return -1
+        return 0
+      })
+    },
     enabled: !!page && !!size
   })
 
