@@ -134,6 +134,13 @@ export const Interface = () => {
     return getChainIcon(chainId)
   }
 
+  // Function to get origin chain name
+  const getOriginChainName = (originBlockchain: string) => {
+    const chainId = parseInt(originBlockchain)
+    const chainConfig = getChainConfig(chainId)
+    return chainConfig?.name || `Chain ${chainId}`
+  }
+
   // Function to handle chain icon load error
   const handleChainIconError = (originBlockchain: string) => {
     setFailedChainIcons(prev => new Set(prev).add(originBlockchain))
@@ -470,7 +477,7 @@ export const Interface = () => {
                           </div>
                         )}
                       </div>
-                      {token.display.symbol.toUpperCase()} - {token.originBlockchain}
+                      {token.display.symbol.toUpperCase()} - {getOriginChainName(token.originBlockchain)}
                       {isTokenWhitelisted(token.functionnal.address) && (
                         <span className={s.whitelistedIcon}>⭐</span>
                       )}
