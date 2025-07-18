@@ -45,7 +45,6 @@ export const Interface = () => {
   const { chains, heliosChainIndex } = useChains()
   const { assets, isLoading: whitelistedAssetsLoading } = useWhitelistedAssets()
   const {
-    txInProgress,
     sendToChain,
     sendToHelios,
     feedback: bridgeFeedback
@@ -679,13 +678,6 @@ export const Interface = () => {
           >
             {isDeposit ? "Deposit now" : "Withdraw now"}
           </Button>
-
-          {txInProgress && txInProgress.receivedToken.contract && (
-            <Message title="New token transfered" variant="secondary">
-              {`Token contract in new chain is`}{" "}
-              <b>{txInProgress.receivedToken.contract}</b>.
-            </Message>
-          )}
         </div>
       </Card>
       {/* <Modal

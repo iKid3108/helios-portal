@@ -15,7 +15,7 @@ import {
   getHyperionAccountTransferTxsByPageAndSize,
   getTokensByChainIdAndPageAndSize
 } from "@/helpers/rpc-calls"
-import { toHex } from "viem"
+import { toHex, TransactionReceipt } from "viem"
 import { secondsToMilliseconds } from "date-fns"
 import { getChainConfig } from "@/config/chain-config"
 import { getBestGasPrice } from "@/lib/utils/gas"
@@ -33,7 +33,7 @@ export const useBridge = () => {
   const queryClient = useQueryClient()
   const { getTokenByAddress } = useTokenRegistry()
 
-  const [txHashInProgress, setTxHashInProgress] = useState("")
+  // const [txHashInProgress, setTxHashInProgress] = useState("")
 
   const enrichHyperionTransaction = async (
     tx: any
@@ -102,7 +102,7 @@ export const useBridge = () => {
       status: "primary",
       message: ""
     })
-    setTxHashInProgress("")
+    // setTxHashInProgress("")
   }
 
   const loadTokensByChain = async (chainId: number) => {
@@ -201,40 +201,64 @@ export const useBridge = () => {
           })
         }
 
-        setFeedback({
-          status: "primary",
-          message: "Sending cross-chain transaction..."
-        })
-
         const contract = new web3Provider.eth.Contract(
           bridgeSendToChainAbi,
           BRIDGE_CONTRACT_ADDRESS
         )
 
-        const tx = await contract.methods
-          .sendToChain(
-            chainId,
-            receiverAddress,
-            tokenAddress,
-            amount.toString(),
-            fees.toString()
-          )
-          .send({
-            from: address,
-            gas: "1500000", // sendToChain gas limit
-            gasPrice: bestGasPrice.toString()
+        setFeedback({
+          status: "primary",
+          message: "Simulating cross-chain transaction..."
+        })
+
+        // simulate the transaction
+        const resultOfSimulation = await contract.methods
+          .sendToChain(chainId, receiverAddress, tokenAddress, amount.toString(), fees.toString())
+          .call({
+            from: address
           })
+
+        if (!resultOfSimulation) {
+          throw new Error("Error during simulation, please try again later")
+        }
 
         setFeedback({
           status: "primary",
-          message: `Transaction sent (hash: ${tx.transactionHash}), waiting for confirmation...`
+          message: "Estimating gas..."
         })
 
-        setTxHashInProgress(tx.transactionHash)
+        // estimate the gas
+        const gasEstimate = await contract.methods
+          .sendToChain(chainId, receiverAddress, tokenAddress, amount.toString(), fees.toString())
+          .estimateGas({
+            from: address
+          })
+        setFeedback({
+          status: "primary",
+          message: "Sending cross-chain transaction..."
+        })
+        // add 20% to the gas estimation to be safe
+        const gasLimit = (gasEstimate * 120n) / 100n
 
-        const receipt = await web3Provider.eth.getTransactionReceipt(
-          tx.transactionHash
-        )
+        // send the transaction
+        const receipt = await new Promise<TransactionReceipt>((resolve, reject) => {
+          web3Provider.eth.sendTransaction({
+            from: address,
+            to: BRIDGE_CONTRACT_ADDRESS,
+            data: contract.methods.sendToChain(chainId, receiverAddress, tokenAddress, amount.toString(), fees.toString()).encodeABI(),
+            gas: gasLimit.toString()
+          }).then((tx) => {
+            resolve(tx as any)
+          }).catch((error) => {
+            console.log("error", error)
+            reject(error)
+          })
+        })
+
+        setFeedback({
+          status: "primary",
+          message: `Transaction sent (hash: ${receipt.transactionHash}), waiting for confirmation...`
+        })
 
         setFeedback({
           status: "success",
@@ -249,6 +273,7 @@ export const useBridge = () => {
 
         return receipt
       } catch (error: unknown) {
+        console.log("error catched", error)
         setFeedback({
           status: "danger",
           message: getErrorMessage(error) || "Error during sendToChain"
@@ -356,24 +381,53 @@ export const useBridge = () => {
           chainContractAddress
         )
 
-        const tx = await hyperionContract.methods
+        // simulate the transaction
+        const resultOfSimulation = await hyperionContract.methods
           .sendToHelios(
             tokenAddress,
             destinationBytes32,
             amountWithFees.toString(),
             ""
           )
-          .send({
-            from: address,
-            gas: "1500000", // sendToHelios gas limit
-            gasPrice: bestGasPrice.toString()
+          .call({
+            from: address
           })
 
-        setTxHashInProgress(tx.transactionHash)
+        if (!resultOfSimulation) {
+          throw new Error("Error during simulation, please try again later")
+        }
 
-        const receipt = await web3Provider.eth.getTransactionReceipt(
-          tx.transactionHash
-        )
+        setFeedback({
+          status: "primary",
+          message: "Estimating gas..."
+        })
+
+        // estimate the gas
+        const gasEstimate = await hyperionContract.methods
+          .sendToHelios(tokenAddress, destinationBytes32, amountWithFees.toString(), "")
+          .estimateGas({
+            from: address
+          })
+        setFeedback({
+          status: "primary",
+          message: "Sending cross-chain transaction..."
+        })
+        // add 20% to the gas estimation to be safe
+        const gasLimit = (gasEstimate * 120n) / 100n
+
+        // send the transaction
+        const receipt = await new Promise<TransactionReceipt>((resolve, reject) => {
+          web3Provider.eth.sendTransaction({
+            from: address,
+            to: chainContractAddress,
+            data: hyperionContract.methods.sendToHelios(tokenAddress, destinationBytes32, amountWithFees.toString(), "").encodeABI(),
+            gas: gasLimit.toString()
+          }).then((tx) => {
+            resolve(tx as any)
+          }).catch((error) => {
+            reject(error)
+          })
+        })
 
         setFeedback({
           status: "success",
@@ -397,14 +451,9 @@ export const useBridge = () => {
     }
   })
 
-  const txInProgress = qAccountHyperionTxs.data?.find(
-    (tx) => tx.txHash === txHashInProgress
-  )
-
   return {
     lastBridgeTxs: enrichedAllHyperionTxs.data || [],
     lastAccountBridgeTxs: enrichedAccountHyperionTxs.data || [],
-    txInProgress,
     sendToChain,
     loadTokensByChain,
     sendToHelios,
