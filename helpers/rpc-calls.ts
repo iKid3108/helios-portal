@@ -58,6 +58,12 @@ export const getProposal = (proposalId: string) =>
 export const getProposalsByPageAndSize = (page: string, size: string) =>
   request<Proposal[]>("eth_getProposalsByPageAndSize", [page, size])
 
+export const getProposalTotalCount = () =>
+  request<string>("eth_getProposalsCount", []).then((result) => {
+    // convert hex string to number
+    return Number(parseInt(result || "0", 16))
+  })
+
 export const getTokensByPageAndSize = (page: string, size: string) =>
   request<Token[]>("eth_getTokensByPageAndSize", [page, size])
 

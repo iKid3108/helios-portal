@@ -3,30 +3,15 @@
 import BackSection from "@/components/back"
 import { Heading } from "@/components/heading"
 import { Icon } from "@/components/icon"
-import { request } from "@/helpers/request"
 import { truncateAddress } from "@/lib/utils"
 import { useRouter } from "next/navigation"
-import React, { useEffect, useState } from "react"
+import React, { useState } from "react"
 import { useAccount } from "wagmi"
 import { ModalProposal } from "../(components)/proposal/modal"
 import styles from "./page.module.scss"
-
-// Updated fetchProposals function using the new request utility
-const fetchProposals = async (page: number, pageSize: number) => {
-  try {
-    const result = await request<any[]>("eth_getProposalsByPageAndSize", [
-      `0x${page.toString(16)}`,
-      `0x${pageSize.toString(16)}`
-    ])
-
-    return result || []
-  } catch (error: unknown) {
-    if (error instanceof Error) {
-      throw error
-    }
-    throw new Error("Failed to fetch proposals")
-  }
-}
+import { useQuery } from "@tanstack/react-query"
+import { getProposalsByPageAndSize, getProposalTotalCount } from "@/helpers/rpc-calls"
+import { toHex } from "@/utils/number"
 
 interface ProposalData {
   id: string
@@ -48,187 +33,107 @@ interface ProposalData {
 
 const AllProposals: React.FC = () => {
   const router = useRouter()
-  const [proposals, setProposals] = useState<ProposalData[]>([])
-  const [loading, setLoading] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
-  const [pageSize] = useState(10)
-  const [totalPages, setTotalPages] = useState<number | null>(null) // null means unknown
-  const [hasNextPage, setHasNextPage] = useState(true)
-  const [totalProposals, setTotalProposals] = useState<number | null>(null) // null means unknown
+  const [pageSize] = useState(20)
   const { isConnected } = useAccount()
-  const [isLoading, setIsLoading] = useState(false)
+  const [isCreateLoading, setIsCreateLoading] = useState(false)
   const [showModal, setShowModal] = useState(false)
-  const [hasLoadedInitial, setHasLoadedInitial] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+
+  // Get total proposals count
+  const { data: totalProposals = 0 } = useQuery({
+    queryKey: ["proposalTotalCount"],
+    queryFn: () => getProposalTotalCount(),
+    staleTime: 30000, // 30 seconds
+    refetchOnWindowFocus: false
+  })
+
+  // Get proposals for current page
+  const { data: rawProposals = [], isLoading, error } = useQuery({
+    queryKey: ["proposals", currentPage, pageSize],
+    queryFn: () => getProposalsByPageAndSize(toHex(currentPage), toHex(pageSize)),
+    enabled: !!currentPage && !!pageSize,
+    staleTime: 30000, // 30 seconds
+    refetchOnWindowFocus: false
+  })
+
+  // Calculate total pages
+  const totalPages = Math.ceil((totalProposals || 0) / pageSize)
+  const hasNextPage = currentPage < totalPages
+  const hasPreviousPage = currentPage > 1
+
+  // Transform raw proposals data
+  const proposals: ProposalData[] = (rawProposals || []).map((item: any) => {
+    const yes = BigInt(item.currentTallyResult?.yes_count || "0")
+    const no = BigInt(item.currentTallyResult?.no_count || "0")
+    const abstain = BigInt(item.currentTallyResult?.abstain_count || "0")
+    const noWithVeto = BigInt(
+      item.currentTallyResult?.no_with_veto_count || "0"
+    )
+
+    const total = yes + no + abstain + noWithVeto || 1n
+    const voteForPercent = Number((yes * 100n) / total)
+    const voteAgainstPercent = Number((no * 100n) / total)
+    const voteAbstainPercent = Number((abstain * 100n) / total)
+    const voteNoWithVetoPercent = Number((noWithVeto * 100n) / total)
+
+    // Convert from smallest unit (assuming 18 decimals)
+    const yesFormatted = (yes / 10n ** 18n).toString()
+    const noFormatted = (no / 10n ** 18n).toString()
+    const abstainFormatted = (abstain / 10n ** 18n).toString()
+    const noWithVetoFormatted = (noWithVeto / 10n ** 18n).toString()
+
+    return {
+      id: item.id.toString(),
+      meta: `By ${item.proposer}`,
+      status: `Ends: ${new Date(item.votingEndTime).toLocaleString(
+        "en-US",
+        {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "numeric",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: true
+        }
+      )}`,
+      votes: `${yesFormatted} For – ${noFormatted} Against – ${abstainFormatted} Abstain – ${noWithVetoFormatted} No with Vote`,
+      title: item.title,
+      result: item.status,
+      resultClass:
+        item.status === "PASSED"
+          ? styles.executed
+          : item.status === "REJECTED"
+          ? styles.rejected
+          : styles.voting_period,
+      voteFor: `${yesFormatted}shares`,
+      voteAgainst: `${noFormatted}shares`,
+      voteAbstain: `${abstainFormatted}shares`,
+      voteNoWithVeto: `${noWithVetoFormatted}shares`,
+      voteForPercent: `${voteForPercent}%`,
+      voteAgainstPercent: `${voteAgainstPercent}%`,
+      voteAbstainPercent: `${voteAbstainPercent}%`,
+      voteNoWithVetoPercent: `${voteNoWithVetoPercent}%`
+    }
+  })
 
   const handleCreateProposal = () => {
-    setIsLoading(true)
+    setIsCreateLoading(true)
     setTimeout(() => {
-      setIsLoading(false)
+      setIsCreateLoading(false)
       setShowModal(true)
     }, 200)
   }
 
-  // Function to discover total pages by fetching until we get empty results
-  const discoverTotalPages = async () => {
-    let page = 1
-    let totalFound = 0
-    let totalProposalCount = 0
-
-    try {
-      while (true) {
-        const data = await fetchProposals(page, pageSize)
-
-        if (!data || data.length === 0) {
-          // No data on this page, so previous page was the last
-          totalFound = Math.max(0, page - 1)
-          break
-        }
-
-        // Add the count from this page
-        totalProposalCount += data.length
-
-        if (data.length < pageSize) {
-          // This page has data but less than pageSize, so it's the last page
-          totalFound = page
-          break
-        }
-
-        // This page is full, continue to next page
-        page++
-      }
-    } catch (error) {
-      console.error("Error discovering total pages:", error)
-      // If there's an error, assume at least 1 page exists
-      totalFound = 1
-      totalProposalCount = 0 // Reset count on error
-    }
-
-    setTotalPages(totalFound)
-    setTotalProposals(totalProposalCount)
-    setHasNextPage(totalFound > 1)
-    return { totalFound, totalProposalCount }
-  }
-
-  const loadProposals = async (page: number) => {
-    if (loading) return
-
-    setLoading(true)
-    setError(null)
-    console.log("Fetching proposals for page:", page)
-
-    try {
-      const rawData = await fetchProposals(page, pageSize)
-
-      setHasLoadedInitial(true)
-
-      if (!rawData || rawData.length === 0) {
-        // We've reached the end - set total pages to the previous page
-        const actualTotalPages = Math.max(1, page - 1)
-        setHasNextPage(false)
-        setTotalProposals(0) // No proposals found
-
-        // If we're on page 1 and get no results, show empty state
-        if (page === 1) {
-          setProposals([])
-        } else {
-          // If we're on a page beyond the total, redirect to last valid page
-          setCurrentPage(actualTotalPages)
-          if (actualTotalPages > 0) {
-            loadProposals(actualTotalPages)
-          }
-        }
-        return
-      }
-
-      // Update hasNextPage based on returned data length
-      const isLastPage = rawData.length < pageSize
-      setHasNextPage(!isLastPage)
-
-      // Only update total proposals if we haven't discovered them yet
-      // The accurate count will come from discoverTotalPages
-      if (totalProposals === null && page === 1) {
-        // If this is the first page and we haven't discovered total yet,
-        // trigger the discovery process
-        discoverTotalPages()
-      }
-
-      const newProposals: ProposalData[] = rawData.map((item: any) => {
-        const yes = BigInt(item.currentTallyResult?.yes_count || "0")
-        const no = BigInt(item.currentTallyResult?.no_count || "0")
-        const abstain = BigInt(item.currentTallyResult?.abstain_count || "0")
-        const noWithVeto = BigInt(
-          item.currentTallyResult?.no_with_veto_count || "0"
-        )
-
-        const total = yes + no + abstain + noWithVeto || 1n
-        const voteForPercent = Number((yes * 100n) / total)
-        const voteAgainstPercent = Number((no * 100n) / total)
-        const voteAbstainPercent = Number((abstain * 100n) / total)
-        const voteNoWithVetoPercent = Number((noWithVeto * 100n) / total)
-
-        // Convert from smallest unit (assuming 18 decimals like your original code)
-        const yesFormatted = (yes / 10n ** 18n).toString()
-        const noFormatted = (no / 10n ** 18n).toString()
-        const abstainFormatted = (abstain / 10n ** 18n).toString()
-        const noWithVetoFormatted = (noWithVeto / 10n ** 18n).toString()
-
-        return {
-          id: item.id.toString(),
-          meta: `By ${item.proposer}`,
-          status: `Ends: ${new Date(item.votingEndTime).toLocaleString(
-            "en-US",
-            {
-              year: "numeric",
-              month: "2-digit",
-              day: "2-digit",
-              hour: "numeric",
-              minute: "2-digit",
-              second: "2-digit",
-              hour12: true
-            }
-          )}`,
-          votes: `${yesFormatted} For – ${noFormatted} Against – ${abstainFormatted} Abstain – ${noWithVetoFormatted} No with Vote`,
-          title: item.title,
-          result: item.status,
-          resultClass:
-            item.status === "PASSED"
-              ? styles.executed
-              : item.status === "REJECTED"
-              ? styles.rejected
-              : styles.voting_period,
-          voteFor: `${yesFormatted}shares`,
-          voteAgainst: `${noFormatted}shares`,
-          voteAbstain: `${abstainFormatted}shares`,
-          voteNoWithVeto: `${noWithVetoFormatted}shares`,
-          voteForPercent: `${voteForPercent}%`,
-          voteAgainstPercent: `${voteAgainstPercent}%`,
-          voteAbstainPercent: `${voteAbstainPercent}%`,
-          voteNoWithVetoPercent: `${voteNoWithVetoPercent}%`
-        }
-      })
-
-      setProposals(newProposals)
-    } catch (error: unknown) {
-      console.error("Failed to fetch proposals", error)
-      const message =
-        error instanceof Error ? error.message : "Failed to load proposals"
-      setError(message)
-    } finally {
-      setLoading(false)
-    }
-  }
-
   // Handle page change
   const handlePageChange = (page: number) => {
-    if (page < 1 || page === currentPage || loading) return
+    if (page < 1 || page > totalPages || page === currentPage || isLoading) return
     setCurrentPage(page)
-    loadProposals(page)
   }
 
   // Handle previous page
   const handlePrevious = () => {
-    if (currentPage > 1) {
+    if (hasPreviousPage) {
       handlePageChange(currentPage - 1)
     }
   }
@@ -240,69 +145,41 @@ const AllProposals: React.FC = () => {
     }
   }
 
-  // Initial load effect
-  useEffect(() => {
-    if (!hasLoadedInitial) {
-      discoverTotalPages().then(() => {
-        // The state is already set in discoverTotalPages, just load the first page
-        loadProposals(1)
-      })
-    }
-  })
-
   // Pagination component
   const Pagination = () => {
     const getPageNumbers = () => {
       const pages = []
       const maxVisiblePages = 5
 
-      if (totalPages === null) {
-        // We don't know total pages yet, show conservative pagination
-        pages.push(currentPage)
+      let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2))
+      const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1)
 
-        if (currentPage > 1) {
-          pages.unshift(currentPage - 1)
-        }
-      } else {
-        // We know the total, show normal pagination
-        let startPage = Math.max(
-          1,
-          currentPage - Math.floor(maxVisiblePages / 2)
-        )
-        const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1)
+      // Adjust start if we're near the end
+      if (endPage - startPage + 1 < maxVisiblePages) {
+        startPage = Math.max(1, endPage - maxVisiblePages + 1)
+      }
 
-        // Adjust start if we're near the end
-        if (endPage - startPage + 1 < maxVisiblePages) {
-          startPage = Math.max(1, endPage - maxVisiblePages + 1)
-        }
-
-        for (let i = startPage; i <= endPage; i++) {
-          pages.push(i)
-        }
+      for (let i = startPage; i <= endPage; i++) {
+        pages.push(i)
       }
 
       return pages
     }
 
     const pageNumbers = getPageNumbers()
-    const showFirstPage =
-      totalPages !== null && pageNumbers.length > 0 && pageNumbers[0] > 1
-    const showLastPage =
-      totalPages !== null &&
-      pageNumbers.length > 0 &&
-      pageNumbers[pageNumbers.length - 1] < totalPages
+    const showFirstPage = pageNumbers.length > 0 && pageNumbers[0] > 1
+    const showLastPage = pageNumbers.length > 0 && pageNumbers[pageNumbers.length - 1] < totalPages
     const showFirstEllipsis = showFirstPage && pageNumbers[0] > 2
-    const showLastEllipsis =
-      showLastPage && pageNumbers[pageNumbers.length - 1] < totalPages - 1
+    const showLastEllipsis = showLastPage && pageNumbers[pageNumbers.length - 1] < totalPages - 1
 
     return (
       <div className={styles["pagination"]}>
         <button
           className={`${styles["pagination-btn"]} ${
-            currentPage === 1 ? styles.disabled : ""
+            !hasPreviousPage ? styles.disabled : ""
           }`}
           onClick={handlePrevious}
-          disabled={currentPage === 1 || loading}
+          disabled={!hasPreviousPage || isLoading}
         >
           Previous
         </button>
@@ -313,7 +190,7 @@ const AllProposals: React.FC = () => {
               <button
                 className={styles["page-btn"]}
                 onClick={() => handlePageChange(1)}
-                disabled={loading}
+                disabled={isLoading}
               >
                 1
               </button>
@@ -330,7 +207,7 @@ const AllProposals: React.FC = () => {
                 page === currentPage ? styles.active : ""
               }`}
               onClick={() => handlePageChange(page)}
-              disabled={loading}
+              disabled={isLoading}
             >
               {page}
             </button>
@@ -344,7 +221,7 @@ const AllProposals: React.FC = () => {
               <button
                 className={styles["page-btn"]}
                 onClick={() => handlePageChange(totalPages)}
-                disabled={loading}
+                disabled={isLoading}
               >
                 {totalPages}
               </button>
@@ -357,7 +234,7 @@ const AllProposals: React.FC = () => {
             !hasNextPage ? styles.disabled : ""
           }`}
           onClick={handleNext}
-          disabled={!hasNextPage || loading}
+          disabled={!hasNextPage || isLoading}
         >
           Next
         </button>
@@ -366,7 +243,7 @@ const AllProposals: React.FC = () => {
   }
 
   // Show loading state on initial load
-  if (!hasLoadedInitial && loading) {
+  if (isLoading && proposals.length === 0) {
     return (
       <div className={styles["all-proposals"]}>
         <div className={styles.proposalContainer}>
@@ -379,9 +256,9 @@ const AllProposals: React.FC = () => {
             <button
               className={styles["create-proposal"]}
               onClick={handleCreateProposal}
-              disabled={isLoading}
+              disabled={isCreateLoading}
             >
-              {isLoading ? (
+              {isCreateLoading ? (
                 <>
                   <span className={styles.myloader}></span>Loading…
                 </>
@@ -400,8 +277,8 @@ const AllProposals: React.FC = () => {
     )
   }
 
-  // Show error state if there's an error and no initial data loaded
-  if (error && !hasLoadedInitial) {
+  // Show error state if there's an error and no data loaded
+  if (error && proposals.length === 0) {
     return (
       <div className={styles["all-proposals"]}>
         <div className={styles.proposalContainer}>
@@ -414,9 +291,9 @@ const AllProposals: React.FC = () => {
             <button
               className={styles["create-proposal"]}
               onClick={handleCreateProposal}
-              disabled={isLoading}
+              disabled={isCreateLoading}
             >
-              {isLoading ? (
+              {isCreateLoading ? (
                 <>
                   <span className={styles.myloader}></span>Loading…
                 </>
@@ -429,13 +306,13 @@ const AllProposals: React.FC = () => {
         <div className={styles["proposal-list"]}>
           <div className={styles["error-state"]}>
             <h3>Failed to load proposals</h3>
-            <p>{error}</p>
+            <p>{error.message}</p>
             <button
               className={styles["retry-button"]}
-              onClick={() => loadProposals(currentPage)}
-              disabled={loading}
+              onClick={() => window.location.reload()}
+              disabled={isLoading}
             >
-              {loading ? "Retrying..." : "Try Again"}
+              {isLoading ? "Retrying..." : "Try Again"}
             </button>
           </div>
         </div>
@@ -456,9 +333,9 @@ const AllProposals: React.FC = () => {
             <button
               className={styles["create-proposal"]}
               onClick={handleCreateProposal}
-              disabled={isLoading}
+              disabled={isCreateLoading}
             >
-              {isLoading ? (
+              {isCreateLoading ? (
                 <>
                   <span className={styles.myloader}></span>Loading…
                 </>
@@ -470,13 +347,13 @@ const AllProposals: React.FC = () => {
         </div>
 
         {/* Show error banner if there's an error but we have existing data */}
-        {error && hasLoadedInitial && (
+        {error && proposals.length > 0 && (
           <div className={styles["error-banner"]}>
-            <p>{error}</p>
+            <p>{error.message}</p>
             <button
               className={styles["retry-button-small"]}
-              onClick={() => loadProposals(currentPage)}
-              disabled={loading}
+              onClick={() => window.location.reload()}
+              disabled={isLoading}
             >
               Retry
             </button>
@@ -484,33 +361,21 @@ const AllProposals: React.FC = () => {
         )}
 
         {/* Proposal count and pagination info */}
-        {hasLoadedInitial &&
-          !loading &&
-          (proposals.length > 0 || totalProposals !== null) && (
-            <div className={styles["proposal-stats"]}>
-              <div className={styles["stats-info"]}>
-                {totalProposals !== null ? (
-                  <span className={styles["total-count"]}>
-                    {totalProposals} proposal{totalProposals !== 1 ? "s" : ""}{" "}
-                    total
-                  </span>
-                ) : (
-                  <span className={styles["total-count"]}>
-                    <span className={styles.myloader}></span>
-                    Calculating total proposals...
-                  </span>
-                )}
-                {totalPages !== null && (
-                  <span className={styles["page-info"]}>
-                    Page {currentPage} of {totalPages}
-                  </span>
-                )}
-              </div>
+        {proposals.length > 0 && (
+          <div className={styles["proposal-stats"]}>
+            <div className={styles["stats-info"]}>
+              <span className={styles["total-count"]}>
+                {totalProposals} proposal{totalProposals !== 1 ? "s" : ""} total
+              </span>
+              <span className={styles["page-info"]}>
+                Page {currentPage} of {totalPages}
+              </span>
             </div>
-          )}
+          </div>
+        )}
 
         <div className={styles["proposal-list"]}>
-          {proposals.length === 0 && hasLoadedInitial && !loading ? (
+          {proposals.length === 0 && !isLoading ? (
             // Empty state when no proposals exist
             <div className={styles["empty-state"]}>
               <h3>No proposals found</h3>
@@ -659,7 +524,7 @@ const AllProposals: React.FC = () => {
           )}
 
           {/* Loading indicator for page changes */}
-          {loading && hasLoadedInitial && (
+          {isLoading && proposals.length > 0 && (
             <div className={styles.loader}>
               <p>Loading proposals...</p>
             </div>
@@ -667,7 +532,7 @@ const AllProposals: React.FC = () => {
         </div>
 
         {/* Pagination Controls */}
-        {hasLoadedInitial && !loading && proposals.length > 0 && <Pagination />}
+        {proposals.length > 0 && !isLoading && <Pagination />}
       </div>
       <ModalProposal open={showModal} onClose={() => setShowModal(false)} />
     </>
