@@ -4,6 +4,7 @@ import Web3 from "web3"
 import { ethers } from "ethers"
 import { erc20Abi } from "@/constant/helios-contracts"
 import { getChainConfig } from "@/config/chain-config"
+import { secondsToMilliseconds } from "@/utils/number"
 
 export interface TokenInfo {
   name: string
@@ -79,7 +80,8 @@ export const useTokenInfo = (tokenAddress: string | null) => {
     },
     enabled: !!tokenAddress && !!chainId && !!address,
     retry: false,
-    staleTime: 30000, // 30 seconds
+    retryDelay: secondsToMilliseconds(3),
+    staleTime: secondsToMilliseconds(30),
     refetchOnWindowFocus: false,
     refetchOnMount: false
   })
