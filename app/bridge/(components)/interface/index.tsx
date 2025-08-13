@@ -74,12 +74,6 @@ export const Interface = () => {
   const { getTokenByAddress } = useTokenRegistry()
   const chainConfig = chainId ? getChainConfig(chainId) : undefined
 
-  useEffect(() => {
-    if (!openWrapModal && form.asset) {
-      tokenInfo.refetch()
-    }
-  }, [openWrapModal, form.asset, tokenInfo])
-
   const qTokensByChain = useQuery({
     queryKey: ["tokensByChain", form.to?.chainId],
     queryFn: () =>
