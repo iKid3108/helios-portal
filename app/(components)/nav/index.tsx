@@ -42,6 +42,11 @@ export const Nav = () => {
       label: "Governance",
       href: routes.governance,
       disabled: false
+    },
+    {
+      icon: "hugeicons:coins-01",
+      label: "Token Deployer",
+      href: routes.tokenDeployer
     }
   ]
 

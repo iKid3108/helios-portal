@@ -3,7 +3,8 @@ export const routes = {
   bridge: "/bridge",
   validators: "/validators",
   delegations: "/delegations",
-  governance: "/governance"
+  governance: "/governance",
+  tokenDeployer: "/token-deployer"
 }
 
 export default routes

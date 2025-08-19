@@ -244,8 +244,10 @@ export const precompileAbi = [
     inputs: [
       { internalType: "string", name: "name", type: "string" },
       { internalType: "string", name: "symbol", type: "string" },
+      { internalType: "string", name: "denom", type: "string" },
       { internalType: "uint256", name: "totalSupply", type: "uint256" },
-      { internalType: "uint8", name: "decimals", type: "uint8" }
+      { internalType: "uint8", name: "decimals", type: "uint8" },
+      { internalType: "string", name: "logoBase64", type: "string" }
     ],
     name: "createErc20",
     outputs: [

@@ -1,0 +1,155 @@
+@use "styles/mixins" as *;
+
+.recents {
+  height: fit-content;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  text-align: center;
+}
+
+.emptyIcon {
+  font-size: 3rem;
+  color: var(--color-text-tertiary);
+  margin-bottom: 1rem;
+}
+
+.emptyText {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  margin: 0 0 0.5rem 0;
+}
+
+.emptySubtext {
+  font-size: 0.875rem;
+  color: var(--color-text-tertiary);
+  margin: 0;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.token {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: var(--color-background-secondary);
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-border);
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: var(--color-primary);
+    background: var(--color-background-tertiary);
+  }
+}
+
+.tokenInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.tokenIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  background: var(--color-background-tertiary);
+  border-radius: 0.5rem;
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+.logo {
+  border-radius: 0.25rem;
+}
+
+.tokenDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.tokenName {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.name {
+  font-weight: 600;
+  color: var(--color-text);
+  font-size: 0.875rem;
+}
+
+.symbol {
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+}
+
+.tokenMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+
+  @include max(600px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+}
+
+.supply {
+  font-weight: 500;
+}
+
+.time {
+  font-style: italic;
+}
+
+.tokenActions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+
+  @include max(600px) {
+    flex-direction: column;
+  }
+}
+
+@include max(768px) {
+  .token {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .tokenActions {
+    justify-content: center;
+  }
+}
