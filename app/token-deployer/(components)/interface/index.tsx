@@ -24,7 +24,8 @@ import {
   precompileAbi
 } from "@/constant/helios-contracts"
 import { HELIOS_NETWORK_ID } from "@/config/app"
-import { parseUnits, getContractAddress } from "viem"
+import { parseUnits } from "viem"
+import { getCreateAddress } from "ethers"
 import { getErrorMessage } from "@/utils/string"
 
 type TokenForm = {
@@ -270,24 +271,35 @@ export const TokenDeployerInterface = () => {
     setShowPreview(true)
   }
 
-  const predictTokenAddress = useCallback(async (): Promise<string> => {
-    if (!address || !publicClient) return ""
+  const predictTokenAddress = useCallback(
+    async (txNonce?: bigint): Promise<string> => {
+      if (!address || !publicClient) return ""
 
-    try {
-      // Get the current nonce from the blockchain
-      const nonce = await publicClient.getTransactionCount({
-        address: address as `0x${string}`
-      })
+      try {
+        let nonce: number
 
-      return getContractAddress({
-        from: address as `0x${string}`,
-        nonce: BigInt(nonce)
-      })
-    } catch (error) {
-      console.error("Failed to predict token address:", error)
-      return ""
-    }
-  }, [address, publicClient])
+        if (txNonce !== undefined) {
+          // Use the provided nonce (from transaction)
+          nonce = Number(txNonce)
+        } else {
+          // Get the current nonce from the blockchain
+          const currentNonce = await publicClient.getTransactionCount({
+            address: address as `0x${string}`
+          })
+          nonce = currentNonce
+        }
+
+        return getCreateAddress({
+          from: address,
+          nonce: nonce
+        })
+      } catch (error) {
+        console.error("Failed to predict token address:", error)
+        return ""
+      }
+    },
+    [address, publicClient]
+  )
 
   const handleDeploy = async () => {
     if (!validateForm()) return
@@ -368,46 +380,60 @@ export const TokenDeployerInterface = () => {
     // Store the current transaction hash to prevent reprocessing
     const currentHash = hash
 
-    if (isConfirmed && currentHash && !hasProcessedSuccess) {
+    if (isConfirmed && currentHash && !hasProcessedSuccess && publicClient) {
       const handleSuccess = async () => {
         if (!isMounted) return
 
         // Set this flag immediately to prevent multiple executions
         setHasProcessedSuccess(true)
 
-        const predictedAddress = await predictTokenAddress()
+        try {
+          // Get the transaction details to extract the nonce
+          const transaction = await publicClient.getTransaction({
+            hash: currentHash as `0x${string}`
+          })
 
-        const deployedTokenData: DeployedToken = {
-          address: predictedAddress,
-          name: form.name,
-          symbol: form.symbol,
-          denom: form.denom,
-          totalSupply: form.totalSupply,
-          decimals: parseInt(form.decimals),
-          logoBase64: form.logoBase64,
-          txHash: currentHash,
-          timestamp: Date.now()
+          // Calculate the contract address using the actual nonce from the transaction
+          const predictedAddress = await predictTokenAddress(
+            BigInt(transaction.nonce)
+          )
+
+          const deployedTokenData: DeployedToken = {
+            address: predictedAddress,
+            name: form.name,
+            symbol: form.symbol,
+            denom: form.denom,
+            totalSupply: form.totalSupply,
+            decimals: parseInt(form.decimals),
+            logoBase64: form.logoBase64,
+            txHash: currentHash,
+            timestamp: Date.now()
+          }
+
+          setDeployedToken(deployedTokenData)
+          setShowPreview(false)
+          setShowSuccess(true)
+          setForm((prev) => ({ ...prev, inProgress: false }))
+
+          // Store in localStorage for recents
+          const recents = JSON.parse(
+            localStorage.getItem("deployedTokens") || "[]"
+          )
+          recents.unshift(deployedTokenData)
+          localStorage.setItem(
+            "deployedTokens",
+            JSON.stringify(recents.slice(0, 10))
+          ) // Keep only last 10
+
+          toast.success("Token deployed successfully!")
+
+          // Store this hash in localStorage to prevent reprocessing on page refresh
+          localStorage.setItem("lastProcessedTxHash", currentHash)
+        } catch (error) {
+          console.error("Failed to get transaction details:", error)
+          toast.error("Failed to get deployed token address")
+          setForm((prev) => ({ ...prev, inProgress: false }))
         }
-
-        setDeployedToken(deployedTokenData)
-        setShowPreview(false)
-        setShowSuccess(true)
-        setForm((prev) => ({ ...prev, inProgress: false }))
-
-        // Store in localStorage for recents
-        const recents = JSON.parse(
-          localStorage.getItem("deployedTokens") || "[]"
-        )
-        recents.unshift(deployedTokenData)
-        localStorage.setItem(
-          "deployedTokens",
-          JSON.stringify(recents.slice(0, 10))
-        ) // Keep only last 10
-
-        toast.success("Token deployed successfully!")
-
-        // Store this hash in localStorage to prevent reprocessing on page refresh
-        localStorage.setItem("lastProcessedTxHash", currentHash)
       }
 
       // Check if we've already processed this hash (in case of page refresh)
@@ -421,7 +447,14 @@ export const TokenDeployerInterface = () => {
     return () => {
       isMounted = false
     }
-  }, [isConfirmed, hash, hasProcessedSuccess, form, predictTokenAddress])
+  }, [
+    isConfirmed,
+    hash,
+    hasProcessedSuccess,
+    form,
+    predictTokenAddress,
+    publicClient
+  ])
 
   const handleAddToWallet = async () => {
     if (!deployedToken || !window.ethereum) return
