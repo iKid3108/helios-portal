@@ -7,6 +7,12 @@ export const getErrorMessage = (error: any) => {
       "rpc error: code = Internal desc = ",
       ""
     )
+
+    // Truncate long error messages
+    if (errorMessage.length > 80) {
+      errorMessage = errorMessage.substring(0, 77) + "..."
+    }
+
     errorMessage = errorMessage.charAt(0).toUpperCase() + errorMessage.slice(1)
     if (!errorMessage.endsWith(".")) {
       errorMessage += "."
@@ -17,18 +23,29 @@ export const getErrorMessage = (error: any) => {
 
   if (error.message) {
     let errorMessage = error.message
+
+    // Handle common error messages
     if (errorMessage.includes("User denied")) {
-      errorMessage = "User denied transaction signature."
+      return "User denied transaction signature."
     }
 
     if (errorMessage.includes("reverted")) {
-      errorMessage = "An error occured, please try again."
+      return "Transaction reverted. Please try again."
+    }
+
+    if (errorMessage.includes("insufficient funds")) {
+      return "Insufficient funds for transaction."
+    }
+
+    // Truncate long error messages
+    if (errorMessage.length > 80) {
+      errorMessage = errorMessage.substring(0, 77) + "..."
     }
 
     return errorMessage
   }
 
-  return false
+  return "Transaction failed. Please try again."
 }
 
 export const formatHash = (

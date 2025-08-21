@@ -1,0 +1,302 @@
+@use "styles/mixins" as *;
+
+.interface {
+  height: fit-content;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+// Input styles removed - using Input component
+
+.uploadSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.uploadLabel {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.fileInput {
+  display: none;
+}
+
+.fileLabel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 2rem 1.5rem;
+  background: var(--background-lower);
+  border: 2px dashed var(--color-light-400);
+  border-radius: var(--radius-l);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 500;
+  min-height: 120px;
+
+  &:hover {
+    border-color: var(--primary-medium);
+    background: var(--background-low);
+    color: var(--primary-medium);
+    transform: translateY(-1px);
+  }
+
+  svg {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+.logoPreview {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: var(--color-background-tertiary);
+  border: 1px solid var(--color-light-400);
+  border-radius: var(--radius-m);
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+
+  img {
+    border-radius: var(--radius-s);
+    width: 50px;
+    height: 50px;
+  }
+}
+
+.warning {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: var(--color-warning-background);
+  border: 1px solid var(--color-warning);
+  border-radius: 0.5rem;
+  color: var(--color-warning);
+  font-size: 0.9rem;
+  font-weight: 500;
+
+  svg {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    color: var(--color-warning);
+  }
+}
+
+.walletWarning {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid #ff9c07;
+  border-radius: 0.5rem;
+  color: #ff9c07;
+  font-size: 0.9rem;
+  font-weight: 500;
+
+  svg {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    color: #ff9c07;
+  }
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+
+  @include max(600px) {
+    flex-direction: column;
+  }
+}
+
+.previewBtn {
+  flex: 1;
+}
+
+.deployBtn {
+  flex: 2;
+}
+
+// Modal styles
+.modal {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 550px;
+  width: 100%;
+
+  :global(.card) {
+    background: transparent;
+    box-shadow: none;
+    border: none;
+  }
+
+  :global(.modal) {
+    background-color: var(--background-medium);
+  }
+}
+
+.previewCard {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-radius: var(--radius-l);
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.successCard {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  border-radius: var(--radius-s);
+  background: var(--background-low);
+  border: 1px solid var(--border-medium);
+  box-shadow: var(--shadow-sm);
+}
+
+.preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.previewItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.875rem 1rem;
+  background: var(--background-low);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-m);
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: var(--border-medium);
+    background: var(--background-lower);
+  }
+}
+
+.previewLabel {
+  font-weight: 500;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.previewValue {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  text-align: right;
+  max-width: 60%;
+}
+
+.previewLogo {
+  border-radius: 0.25rem;
+}
+
+.modalActions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+.editButton {
+  border: 1px solid var(--border-medium) !important;
+  background-color: transparent !important;
+  color: var(--text-primary) !important;
+
+  &:hover {
+    background-color: var(--background-low) !important;
+    border-color: var(--border-dark) !important;
+  }
+}
+
+// Success modal styles
+.success {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.successItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.successLabel {
+  font-weight: 500;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.addressContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  background: var(--background-low);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-m);
+}
+
+.address {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  word-break: break-all;
+}
+
+.txHash {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  word-break: break-all;
+}
+
+.successActions {
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  margin-top: 1.5rem;
+
+  @include max(600px) {
+    flex-direction: column;
+  }
+
+  button {
+    flex: 1;
+  }
+}
