@@ -285,21 +285,11 @@ export const useCreateToken = () => {
           totalSupply: params.totalSupply,
           decimals: parseInt(params.decimals),
           logoBase64: params.logoBase64 || "",
-          txHash: receipt.transactionHash,
+          txHash: (receipt as any).transactionHash || (receipt as any).hash,
           timestamp: Date.now()
         }
 
         setDeployedToken(deployedTokenData)
-
-        // Store in localStorage for recents
-        const recents = JSON.parse(
-          localStorage.getItem("deployedTokens") || "[]"
-        )
-        recents.unshift(deployedTokenData)
-        localStorage.setItem(
-          "deployedTokens",
-          JSON.stringify(recents.slice(0, 10))
-        ) // Keep only last 10
 
         return { receipt, deployedToken: deployedTokenData }
       } catch (error: any) {
@@ -320,10 +310,10 @@ export const useCreateToken = () => {
   })
 
   const createToken = async (params: TokenParams) => {
-    if (!validateTokenParams(params)) return
+    if (!validateTokenParams(params)) return null
 
     try {
-      await createTokenMutation.mutateAsync(params)
+      const result = await createTokenMutation.mutateAsync(params)
 
       setFeedback({
         status: "success",
@@ -336,9 +326,12 @@ export const useCreateToken = () => {
       await queryClient.refetchQueries({
         queryKey: ["accountLastTxs", address]
       })
+
+      return result
     } catch (error) {
       // Error is already handled in the mutation
       console.error("Token deployment failed:", error)
+      return null
     }
   }
 

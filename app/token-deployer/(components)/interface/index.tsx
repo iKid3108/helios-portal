@@ -13,11 +13,8 @@ import { toast } from "sonner"
 import s from "./interface.module.scss"
 import { useAccount, useChainId, useWalletClient } from "wagmi"
 import { HELIOS_NETWORK_ID } from "@/config/app"
-import {
-  useCreateToken,
-  type TokenParams,
-  type DeployedToken
-} from "@/hooks/useCreateToken"
+import { useCreateToken, type TokenParams } from "@/hooks/useCreateToken"
+import { useRecentTokensContext } from "@/context/RecentTokensContext"
 
 type TokenForm = {
   name: string
@@ -44,16 +41,9 @@ export const TokenDeployerInterface = () => {
     logoBase64: ""
   })
 
-  const {
-    createToken,
-    reset,
-    feedback,
-    resetFeedback,
-    deployedToken,
-    isLoading,
-    isSuccess,
-    error
-  } = useCreateToken()
+  const { createToken, reset, deployedToken, isLoading } = useCreateToken()
+
+  const { addToken } = useRecentTokensContext()
 
   const handleInputChange =
     (field: keyof TokenForm) =>
@@ -144,7 +134,11 @@ export const TokenDeployerInterface = () => {
     }
 
     try {
-      await createToken(tokenParams)
+      const result = await createToken(tokenParams)
+      // Add token to recent list immediately
+      if (result && result.deployedToken) {
+        addToken(result.deployedToken)
+      }
       setShowPreview(false)
       setShowSuccess(true)
     } catch (error) {
