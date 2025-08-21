@@ -17,9 +17,9 @@ import {
   useChainId,
   useWriteContract,
   useWaitForTransactionReceipt,
-  usePublicClient
+  usePublicClient,
+  useWalletClient
 } from "wagmi"
-import Web3 from "web3"
 import {
   PRECOMPILE_CONTRACT_ADDRESS,
   precompileAbi
@@ -54,6 +54,7 @@ export const TokenDeployerInterface = () => {
   const chainId = useChainId()
   const { address } = useAccount()
   const publicClient = usePublicClient()
+  const { data: walletClient } = useWalletClient()
   const [showPreview, setShowPreview] = useState(false)
   const [deployedToken, setDeployedToken] = useState<DeployedToken | null>(null)
   const [showSuccess, setShowSuccess] = useState(false)
@@ -109,14 +110,19 @@ export const TokenDeployerInterface = () => {
     let timeoutId: NodeJS.Timeout
 
     if (isPending && form.inProgress) {
+      // Increase timeout to 2 minutes to account for MetaMask interaction time
+      // MetaMask can take 30+ seconds to show confirmation modal
       timeoutId = setTimeout(() => {
         // Check if still pending after timeout
-        if (form.inProgress) {
-          toast.error("Transaction dropped. Please try again.")
-          setForm((prev) => ({ ...prev, inProgress: false }))
-          setShowPreview(false)
+        if (form.inProgress && isPending) {
+          toast.error(
+            "Transaction is taking longer than expected. Please check your wallet."
+          )
+          // Don't reset the form state here, let the user decide
+          // setForm((prev) => ({ ...prev, inProgress: false }))
+          // setShowPreview(false)
         }
-      }, 30000) // 30 seconds timeout
+      }, 120000) // 2 minutes timeout - just for notification, not reset
     }
 
     return () => {
@@ -274,8 +280,10 @@ export const TokenDeployerInterface = () => {
   const extractTokenAddressFromReceipt = useCallback(
     async (txHash: string): Promise<string> => {
       try {
-        // Use web3 provider directly to get the receipt with retry logic
-        const web3Provider = new Web3((window as any).ethereum)
+        // Use publicClient from wagmi instead of Web3 to avoid wallet conflicts
+        if (!publicClient) {
+          throw new Error("Public client not available")
+        }
 
         const receipt = await new Promise<any>((resolve, reject) => {
           let attempts = 0
@@ -284,9 +292,9 @@ export const TokenDeployerInterface = () => {
           const checkReceipt = async () => {
             try {
               attempts++
-              const txReceipt = await web3Provider.eth.getTransactionReceipt(
-                txHash
-              )
+              const txReceipt = await publicClient.getTransactionReceipt({
+                hash: txHash as `0x${string}`
+              })
 
               if (txReceipt) {
                 resolve(txReceipt)
@@ -376,7 +384,7 @@ export const TokenDeployerInterface = () => {
         return ""
       }
     },
-    []
+    [publicClient]
   )
 
   const handleDeploy = async () => {
@@ -401,14 +409,15 @@ export const TokenDeployerInterface = () => {
     // Set a timeout to reset the form state if the transaction takes too long
     const timeoutId = setTimeout(() => {
       if (form.inProgress) {
-        toast.error("Transaction timeout. Check your wallet for status.")
+        toast.error(
+          "Transaction timeout. Please check your wallet and try again if needed."
+        )
         setForm((prev) => ({ ...prev, inProgress: false }))
+        setShowPreview(false)
       }
-    }, 60000) // 60 seconds timeout
+    }, 180000) // 3 minutes timeout - enough time for MetaMask interaction
 
     try {
-      toast.info("Initiating token deployment...")
-
       // Ensure decimals is a valid number between 0 and 18
       const decimals = Math.min(Math.max(parseInt(form.decimals) || 18, 0), 18)
 
@@ -466,9 +475,6 @@ export const TokenDeployerInterface = () => {
         setHasProcessedSuccess(true)
 
         try {
-          // Show progress message
-          toast.info("Extracting contract address from transaction receipt...")
-
           // Extract the actual contract address from the transaction receipt
           const contractAddress = await extractTokenAddressFromReceipt(
             currentHash
@@ -538,10 +544,10 @@ export const TokenDeployerInterface = () => {
   ])
 
   const handleAddToWallet = async () => {
-    if (!deployedToken || !window.ethereum) return
+    if (!deployedToken || !walletClient) return
 
     try {
-      await (window.ethereum.request as any)({
+      await walletClient.request({
         method: "wallet_watchAsset",
         params: {
           type: "ERC20",
@@ -559,6 +565,12 @@ export const TokenDeployerInterface = () => {
     } catch {
       toast.error("Failed to add token to wallet")
     }
+  }
+
+  const cancelTransaction = () => {
+    setForm((prev) => ({ ...prev, inProgress: false }))
+    setShowPreview(false)
+    toast.info("Transaction cancelled. You can try again.")
   }
 
   const resetForm = () => {
@@ -780,21 +792,31 @@ export const TokenDeployerInterface = () => {
           </div>
 
           <div className={s.modalActions}>
-            <Button
-              variant="secondary"
-              onClick={() => setShowPreview(false)}
-              className={s.editButton}
-            >
-              Edit
-            </Button>
-            <Button
-              onClick={handleDeploy}
-              disabled={form.inProgress || isPending || isConfirming}
-            >
-              {form.inProgress || isPending || isConfirming
-                ? "Deploying..."
-                : "Confirm Deploy"}
-            </Button>
+            {form.inProgress || isPending || isConfirming ? (
+              <>
+                <Button
+                  variant="secondary"
+                  onClick={cancelTransaction}
+                  className={s.cancelButton}
+                >
+                  Cancel
+                </Button>
+                <Button disabled>
+                  {isConfirming ? "Confirming..." : "Deploying..."}
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  variant="secondary"
+                  onClick={() => setShowPreview(false)}
+                  className={s.editButton}
+                >
+                  Edit
+                </Button>
+                <Button onClick={handleDeploy}>Confirm Deploy</Button>
+              </>
+            )}
           </div>
         </Card>
       </Modal>
