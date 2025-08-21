@@ -19,13 +19,13 @@ import {
   useWaitForTransactionReceipt,
   usePublicClient
 } from "wagmi"
+import Web3 from "web3"
 import {
   PRECOMPILE_CONTRACT_ADDRESS,
   precompileAbi
 } from "@/constant/helios-contracts"
 import { HELIOS_NETWORK_ID } from "@/config/app"
 import { parseUnits } from "viem"
-import { getCreateAddress } from "ethers"
 import { getErrorMessage } from "@/utils/string"
 
 type TokenForm = {
@@ -271,34 +271,112 @@ export const TokenDeployerInterface = () => {
     setShowPreview(true)
   }
 
-  const predictTokenAddress = useCallback(
-    async (txNonce?: bigint): Promise<string> => {
-      if (!address || !publicClient) return ""
-
+  const extractTokenAddressFromReceipt = useCallback(
+    async (txHash: string): Promise<string> => {
       try {
-        let nonce: number
+        // Use web3 provider directly to get the receipt with retry logic
+        const web3Provider = new Web3((window as any).ethereum)
 
-        if (txNonce !== undefined) {
-          // Use the provided nonce (from transaction)
-          nonce = Number(txNonce)
-        } else {
-          // Get the current nonce from the blockchain
-          const currentNonce = await publicClient.getTransactionCount({
-            address: address as `0x${string}`
-          })
-          nonce = currentNonce
+        const receipt = await new Promise<any>((resolve, reject) => {
+          let attempts = 0
+          const maxAttempts = 30 // 30 attempts with 2 second intervals = 60 seconds max
+
+          const checkReceipt = async () => {
+            try {
+              attempts++
+              const txReceipt = await web3Provider.eth.getTransactionReceipt(
+                txHash
+              )
+
+              if (txReceipt) {
+                resolve(txReceipt)
+              } else if (attempts >= maxAttempts) {
+                reject(
+                  new Error(
+                    `Transaction receipt not found after ${maxAttempts} attempts`
+                  )
+                )
+              } else {
+                // Show progress every 5 attempts (10 seconds)
+                if (attempts % 5 === 0) {
+                  console.log(
+                    `Waiting for transaction receipt... Attempt ${attempts}/${maxAttempts}`
+                  )
+                }
+                // Wait 2 seconds before next attempt
+                setTimeout(checkReceipt, 2000)
+              }
+            } catch (error) {
+              if (attempts >= maxAttempts) {
+                reject(error)
+              } else {
+                // Wait 2 seconds before next attempt
+                setTimeout(checkReceipt, 2000)
+              }
+            }
+          }
+
+          checkReceipt()
+        })
+
+        // Look for the log that contains the contract address
+        // The precompile adds a log with the contract address in the data field
+        const createLog = receipt.logs.find(
+          (log: any) =>
+            log.address.toLowerCase() ===
+            PRECOMPILE_CONTRACT_ADDRESS.toLowerCase()
+        )
+
+        if (createLog && createLog.data && createLog.data !== "0x") {
+          // The contract address is stored in the data field as bytes (32 bytes padded)
+          // Extract the last 20 bytes (40 hex characters) for the address
+          let addressHex = createLog.data.slice(-40)
+
+          // Ensure it's a valid address format
+          if (
+            addressHex.length === 40 &&
+            addressHex.match(/^[a-fA-F0-9]{40}$/)
+          ) {
+            return `0x${addressHex}`
+          }
+
+          // If data is exactly 66 chars (0x + 64 hex), it's 32 bytes padded
+          if (createLog.data.length === 66) {
+            addressHex = createLog.data.slice(-40)
+            if (addressHex.match(/^[a-fA-F0-9]{40}$/)) {
+              return `0x${addressHex}`
+            }
+          }
         }
 
-        return getCreateAddress({
-          from: address,
-          nonce: nonce
-        })
+        // Fallback: look for any ERC20-related logs that might contain the address
+        for (const log of receipt.logs) {
+          // Check if this could be a Transfer event from the newly created token
+          // Transfer events have 3 topics: event signature, from, to
+          if (
+            log.topics.length === 3 &&
+            log.address.match(/^0x[a-fA-F0-9]{40}$/)
+          ) {
+            // Check if the 'from' address is the zero address (mint operation)
+            const fromAddress = log.topics[1]
+            if (
+              fromAddress ===
+              "0x0000000000000000000000000000000000000000000000000000000000000000"
+            ) {
+              // This is likely a mint operation from the newly created token
+              return log.address
+            }
+          }
+        }
+
+        console.error("Could not find contract address in transaction receipt")
+        return ""
       } catch (error) {
-        console.error("Failed to predict token address:", error)
+        console.error("Failed to extract token address from receipt:", error)
         return ""
       }
     },
-    [address, publicClient]
+    []
   )
 
   const handleDeploy = async () => {
@@ -380,7 +458,7 @@ export const TokenDeployerInterface = () => {
     // Store the current transaction hash to prevent reprocessing
     const currentHash = hash
 
-    if (isConfirmed && currentHash && !hasProcessedSuccess && publicClient) {
+    if (isConfirmed && currentHash && !hasProcessedSuccess) {
       const handleSuccess = async () => {
         if (!isMounted) return
 
@@ -388,18 +466,22 @@ export const TokenDeployerInterface = () => {
         setHasProcessedSuccess(true)
 
         try {
-          // Get the transaction details to extract the nonce
-          const transaction = await publicClient.getTransaction({
-            hash: currentHash as `0x${string}`
-          })
+          // Show progress message
+          toast.info("Extracting contract address from transaction receipt...")
 
-          // Calculate the contract address using the actual nonce from the transaction
-          const predictedAddress = await predictTokenAddress(
-            BigInt(transaction.nonce)
+          // Extract the actual contract address from the transaction receipt
+          const contractAddress = await extractTokenAddressFromReceipt(
+            currentHash
           )
 
+          if (!contractAddress) {
+            throw new Error(
+              "Could not extract contract address from transaction receipt"
+            )
+          }
+
           const deployedTokenData: DeployedToken = {
-            address: predictedAddress,
+            address: contractAddress,
             name: form.name,
             symbol: form.symbol,
             denom: form.denom,
@@ -452,8 +534,7 @@ export const TokenDeployerInterface = () => {
     hash,
     hasProcessedSuccess,
     form,
-    predictTokenAddress,
-    publicClient
+    extractTokenAddressFromReceipt
   ])
 
   const handleAddToWallet = async () => {
