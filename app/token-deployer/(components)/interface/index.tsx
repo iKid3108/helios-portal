@@ -168,17 +168,23 @@ export const TokenDeployerInterface = () => {
       return
     }
 
-    // Validate file size (max 1MB)
-    if (file.size > 1 * 1024 * 1024) {
-      toast.error("Image size must be less than 1MB")
-      return
-    }
-
     const reader = new FileReader()
     reader.onload = (event) => {
       const img = new window.Image()
       img.onload = () => {
-        // Create canvas to resize image to 200x200
+        // Validate image dimensions first (must be exactly 200x200)
+        if (img.width !== 200 || img.height !== 200) {
+          toast.error("Image must be exactly 200x200 pixels")
+          return
+        }
+
+        // Validate file size after dimensions (max 1MB)
+        if (file.size > 1 * 1024 * 1024) {
+          toast.error("Image size must be less than 1MB")
+          return
+        }
+
+        // Create canvas to process the 200x200 image
         const canvas = document.createElement("canvas")
         const ctx = canvas.getContext("2d")
         canvas.width = 200
