@@ -220,50 +220,111 @@ export const useCreateToken = () => {
           PRECOMPILE_CONTRACT_ADDRESS
         )
 
+        // Prepare contract method call once to avoid redundant encoding
+        const contractMethod = contract.methods.createErc20(
+          params.name.trim(),
+          params.symbol.trim(),
+          params.denom.trim(),
+          totalSupplyWei.toString(),
+          decimals,
+          logoBase64
+        )
+
         // Simulate the transaction first to check if it will succeed
-        await contract.methods
-          .createErc20(
-            params.name.trim(),
-            params.symbol.trim(),
-            params.denom.trim(),
-            totalSupplyWei.toString(),
-            decimals,
-            logoBase64
-          )
-          .call({
+        let resultOfSimulation
+        try {
+          resultOfSimulation = await contractMethod.call({
             from: address
           })
+        } catch (error: any) {
+          if (error.message?.includes("circuit breaker")) {
+            throw new Error(
+              "Network is currently overloaded. Please try again in a few moments."
+            )
+          }
+          throw error
+        }
+
+        if (!resultOfSimulation) {
+          throw new Error("Error during simulation, please try again later")
+        }
 
         setFeedback({
           status: "primary",
-          message: `Transaction sent, waiting for confirmation...`
+          message: "Estimating gas..."
         })
 
-        // Send the transaction using direct provider access
+        // Estimate the gas
+        let gasEstimate
+        try {
+          gasEstimate = await contractMethod.estimateGas({
+            from: address
+          })
+        } catch (error: any) {
+          if (error.message?.includes("circuit breaker")) {
+            throw new Error(
+              "Network is currently overloaded. Please try again in a few moments."
+            )
+          }
+          throw error
+        }
+
+        setFeedback({
+          status: "primary",
+          message: `Sending transaction...`
+        })
+
+        // Add 20% to the gas estimation to be safe
+        const gasLimit = (gasEstimate * 120n) / 100n
+
+        // Encode ABI once
+        const encodedData = contractMethod.encodeABI()
+
+        setFeedback({
+          status: "primary",
+          message: `Sending token deployment transaction...`
+        })
+
+        // Show toast before wallet confirmation
+        toast.info("Preparing transaction for wallet confirmation...")
+
+        // Send the transaction using the cleaner pattern
         const receipt = await new Promise<TransactionReceipt>(
           (resolve, reject) => {
             web3Provider.eth
               .sendTransaction({
                 from: address,
                 to: PRECOMPILE_CONTRACT_ADDRESS,
-                data: contract.methods
-                  .createErc20(
-                    params.name.trim(),
-                    params.symbol.trim(),
-                    params.denom.trim(),
-                    totalSupplyWei.toString(),
-                    decimals,
-                    logoBase64
-                  )
-                  .encodeABI()
+                data: encodedData,
+                gas: gasLimit.toString()
               })
               .then((tx) => {
                 console.log("Token deployment tx hash:", tx.transactionHash)
+
+                // Show toast when transaction is submitted to network
+                toast.info(
+                  "Transaction submitted to network, waiting for confirmation..."
+                )
+
+                // Show toast with transaction hash
+                toast.info(
+                  `Transaction hash: ${tx.transactionHash.slice(0, 10)}...`,
+                  { duration: 5000 }
+                )
+
                 resolve(tx as any)
               })
               .catch((error) => {
                 console.log("Token deployment error:", error)
-                reject(error)
+                // Check if user cancelled the transaction
+                if (
+                  error.code === 4001 ||
+                  error.message?.includes("User rejected")
+                ) {
+                  reject(new Error("Transaction cancelled by user"))
+                } else {
+                  reject(error)
+                }
               })
           }
         )
@@ -329,9 +390,10 @@ export const useCreateToken = () => {
 
       return result
     } catch (error) {
-      // Error is already handled in the mutation
+      // Error is already handled in the mutation, but we should still throw it
+      // so the UI component can handle it properly
       console.error("Token deployment failed:", error)
-      return null
+      throw error // Re-throw the error instead of returning null
     }
   }
 

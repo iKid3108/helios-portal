@@ -135,14 +135,29 @@ export const TokenDeployerInterface = () => {
 
     try {
       const result = await createToken(tokenParams)
-      // Add token to recent list immediately
+
+      // Check if deployment was successful
       if (result && result.deployedToken) {
+        // Add token to recent list
         addToken(result.deployedToken)
+        setShowPreview(false)
+        setShowSuccess(true)
+      } else if (result === null) {
+        // Validation failed (result is null) - validation already showed toast
+        setShowPreview(false)
+        console.error("Token deployment failed: Validation error")
+      } else {
+        // Deployment failed for other reasons
+        setShowPreview(false)
+        toast.error("Token deployment failed. Please try again.")
+        console.error("Token deployment failed: No result returned")
       }
+    } catch (error: any) {
       setShowPreview(false)
-      setShowSuccess(true)
-    } catch (error) {
-      setShowPreview(false)
+      // Show user-friendly error message in toast
+      const errorMessage =
+        error?.message || "Token deployment failed. Please try again."
+      toast.error(errorMessage)
       console.error("Token deployment failed:", error)
     }
   }
@@ -174,6 +189,7 @@ export const TokenDeployerInterface = () => {
   const cancelTransaction = () => {
     reset()
     setShowPreview(false)
+    setShowSuccess(false) // Explicitly ensure success modal is closed
     toast.info("Transaction cancelled. You can try again.")
   }
 
@@ -330,11 +346,7 @@ export const TokenDeployerInterface = () => {
                 }
                 className={s.deployBtn}
               >
-                {isLoading
-                  ? "Deploying..."
-                  : !isWalletConnected
-                  ? "Connect Wallet"
-                  : "Deploy Token"}
+                {isLoading ? "Deploying..." : "Deploy Token"}
               </Button>
             </div>
           </div>
@@ -419,7 +431,7 @@ export const TokenDeployerInterface = () => {
 
       {/* Success Modal */}
       <Modal
-        open={showSuccess}
+        open={showSuccess && deployedToken && deployedToken.address}
         onClose={() => {
           setShowSuccess(false)
         }}
