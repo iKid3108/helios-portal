@@ -296,11 +296,13 @@ export const useCreateToken = () => {
 
         setFeedback({
           status: "primary",
-          message: "Estimating gas..."
+          message: "Estimating gas... This may take up to 60 seconds."
         })
 
-        // Estimate gas with better error handling and shorter timeout
+        // Estimate gas with better error handling and longer timeout for slow networks
         let gasEstimate
+        let intermediateTimeout: NodeJS.Timeout | null = null
+
         try {
           console.log("Estimating gas with params:", {
             account: address,
@@ -308,27 +310,37 @@ export const useCreateToken = () => {
             data: data
           })
 
-          // Use a shorter timeout for gas estimation to avoid long waits
+          // Use a longer timeout for gas estimation since the network can be slow
           const estimationPromise = publicClient.estimateGas({
             account: address,
             to: PRECOMPILE_CONTRACT_ADDRESS as `0x${string}`,
             data: data
           })
 
-          // Add a timeout wrapper
+          // Add intermediate feedback for long gas estimation
+          intermediateTimeout = setTimeout(() => {
+            setFeedback({
+              status: "primary",
+              message: "Network is slow, still estimating gas... Please wait."
+            })
+          }, 30000) // Show message after 30 seconds
+
+          // Add a timeout wrapper with increased timeout for slow networks
           const timeoutPromise = new Promise((_, reject) => {
-            setTimeout(
-              () => reject(new Error("Gas estimation timeout")),
-              10000000
-            ) // 10 second timeout
+            setTimeout(() => reject(new Error("Gas estimation timeout")), 60000) // 60 second timeout
           })
 
           gasEstimate = (await Promise.race([
             estimationPromise,
             timeoutPromise
           ])) as bigint
+
+          // Clear the intermediate timeout since estimation completed
+          if (intermediateTimeout) clearTimeout(intermediateTimeout)
           console.log("Gas estimate:", gasEstimate)
         } catch (error: any) {
+          // Clear the intermediate timeout in case of error
+          if (intermediateTimeout) clearTimeout(intermediateTimeout)
           console.warn(
             "Gas estimation failed, using default gas limit:",
             error.message
@@ -447,7 +459,7 @@ export const useCreateToken = () => {
         // Wait for transaction receipt with longer timeout
         const receipt = await publicClient.waitForTransactionReceipt({
           hash: txHash,
-          timeout: 120000 // 2 minute timeout
+          timeout: 180000 // 3 minute timeout
         })
 
         // Check if transaction was successful
