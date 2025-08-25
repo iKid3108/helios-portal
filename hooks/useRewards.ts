@@ -40,12 +40,29 @@ export const useRewards = () => {
           REWARDS_CONTRACT_ADDRESS
         )
 
-        // Read call to verify transaction will pass
+         // simulate the transaction
         await contract.methods.claimRewards(address, 10).call({ from: address })
+
+        setFeedback({
+          status: "primary",
+          message: "Estimating gas..."
+        })
+
+        // estimate the gas
+        const gasEstimate = await contract.methods.claimRewards(address, 10).estimateGas({ from: address })
+
+        setFeedback({
+          status: "primary",
+          message: "Sending transaction..."
+        })
+
+        // add 20% to the gas estimation to be safe
+        const gasLimit = (gasEstimate * 120n) / 100n
+
         // Send actual transaction
         const tx = await contract.methods
           .claimRewards(address, 10)
-          .send({ from: address, gas: "15000000" })
+          .send({ from: address, gas: gasLimit.toString() })
 
         setFeedback({
           status: "primary",
