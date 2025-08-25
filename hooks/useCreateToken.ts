@@ -1,11 +1,9 @@
 "use client"
 
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { useState } from "react"
-import { useAccount } from "wagmi"
-import { useWeb3Provider } from "./useWeb3Provider"
-import { ethers, TransactionReceipt } from "ethers"
-import { parseUnits } from "viem"
+import { useState, useCallback } from "react"
+import { useAccount, useWalletClient, usePublicClient } from "wagmi"
+import { parseUnits, encodeFunctionData } from "viem"
 import { toast } from "sonner"
 import {
   PRECOMPILE_CONTRACT_ADDRESS,
@@ -14,6 +12,12 @@ import {
 import { HELIOS_NETWORK_ID } from "@/config/app"
 import { getErrorMessage } from "@/utils/string"
 import { Feedback } from "@/types/feedback"
+
+interface TransactionReceipt {
+  transactionHash: string
+  logs: any[]
+  [key: string]: any
+}
 
 export type TokenParams = {
   name: string
@@ -38,7 +42,8 @@ export type DeployedToken = {
 
 export const useCreateToken = () => {
   const { address } = useAccount()
-  const web3Provider = useWeb3Provider()
+  const { data: walletClient } = useWalletClient()
+  const publicClient = usePublicClient()
   const queryClient = useQueryClient()
   const [feedback, setFeedback] = useState<Feedback>({
     status: "primary",
@@ -50,7 +55,7 @@ export const useCreateToken = () => {
     setFeedback({ status: "primary", message: "" })
   }
 
-  const validateTokenParams = (params: TokenParams): boolean => {
+  const validateTokenParams = useCallback((params: TokenParams): boolean => {
     // Check name
     if (!params.name.trim()) {
       toast.error("Token name is required")
@@ -81,6 +86,14 @@ export const useCreateToken = () => {
     if (!denomRegex.test(params.denom.trim())) {
       toast.error(
         "Denomination must contain only lowercase letters, numbers, and underscores"
+      )
+      return false
+    }
+
+    // Add helpful note about denomination uniqueness
+    if (params.denom.trim().length < 3) {
+      toast.error(
+        "Denomination should be at least 3 characters long to ensure uniqueness"
       )
       return false
     }
@@ -122,70 +135,86 @@ export const useCreateToken = () => {
     }
 
     return true
-  }
+  }, [])
 
-  const extractTokenAddressFromReceipt = (
-    receipt: TransactionReceipt
-  ): string => {
-    try {
-      // Look for the log that contains the contract address
-      // The precompile adds a log with the contract address in the data field
-      const createLog = receipt.logs.find(
-        (log: any) =>
-          log.address.toLowerCase() ===
-          PRECOMPILE_CONTRACT_ADDRESS.toLowerCase()
-      )
+  const extractTokenAddressFromReceipt = useCallback(
+    (receipt: TransactionReceipt): string => {
+      try {
+        // Look for the log that contains the contract address
+        // The precompile adds a log with the contract address in the data field
+        const createLog = receipt.logs.find(
+          (log: any) =>
+            log.address.toLowerCase() ===
+            PRECOMPILE_CONTRACT_ADDRESS.toLowerCase()
+        )
 
-      if (createLog && createLog.data && createLog.data !== "0x") {
-        // The contract address is stored in the data field as bytes (32 bytes padded)
-        // Extract the last 20 bytes (40 hex characters) for the address
-        let addressHex = createLog.data.slice(-40)
+        if (createLog && createLog.data && createLog.data !== "0x") {
+          // The contract address is stored in the data field as bytes (32 bytes padded)
+          // Extract the last 20 bytes (40 hex characters) for the address
+          let addressHex = createLog.data.slice(-40)
 
-        // Ensure it's a valid address format
-        if (addressHex.length === 40 && addressHex.match(/^[a-fA-F0-9]{40}$/)) {
-          return `0x${addressHex}`
-        }
-
-        // If data is exactly 66 chars (0x + 64 hex), it's 32 bytes padded
-        if (createLog.data.length === 66) {
-          addressHex = createLog.data.slice(-40)
-          if (addressHex.match(/^[a-fA-F0-9]{40}$/)) {
+          // Ensure it's a valid address format
+          if (
+            addressHex.length === 40 &&
+            addressHex.match(/^[a-fA-F0-9]{40}$/)
+          ) {
             return `0x${addressHex}`
           }
-        }
-      }
 
-      // Fallback: look for any ERC20-related logs that might contain the address
-      for (const log of receipt.logs) {
-        // Check if this could be a Transfer event from the newly created token
-        // Transfer events have 3 topics: event signature, from, to
-        if (
-          log.topics.length === 3 &&
-          log.address.match(/^0x[a-fA-F0-9]{40}$/)
-        ) {
-          // Check if the 'from' address is the zero address (mint operation)
-          const fromAddress = log.topics[1]
-          if (
-            fromAddress ===
-            "0x0000000000000000000000000000000000000000000000000000000000000000"
-          ) {
-            // This is likely a mint operation from the newly created token
-            return log.address
+          // If data is exactly 66 chars (0x + 64 hex), it's 32 bytes padded
+          if (createLog.data.length === 66) {
+            addressHex = createLog.data.slice(-40)
+            if (addressHex.match(/^[a-fA-F0-9]{40}$/)) {
+              return `0x${addressHex}`
+            }
           }
         }
-      }
 
-      console.error("Could not find contract address in transaction receipt")
-      return ""
-    } catch (error) {
-      console.error("Failed to extract token address from receipt:", error)
-      return ""
-    }
-  }
+        // Fallback: look for any ERC20-related logs that might contain the address
+        for (const log of receipt.logs) {
+          // Check if this could be a Transfer event from the newly created token
+          // Transfer events have 3 topics: event signature, from, to
+          if (
+            log.topics.length === 3 &&
+            log.address.match(/^0x[a-fA-F0-9]{40}$/)
+          ) {
+            // Check if the 'from' address is the zero address (mint operation)
+            const fromAddress = log.topics[1]
+            if (
+              fromAddress ===
+              "0x0000000000000000000000000000000000000000000000000000000000000000"
+            ) {
+              // This is likely a mint operation from the newly created token
+              return log.address
+            }
+          }
+        }
+
+        console.error("Could not find contract address in transaction receipt")
+        return ""
+      } catch (error) {
+        console.error("Failed to extract token address from receipt:", error)
+        return ""
+      }
+    },
+    []
+  )
 
   const createTokenMutation = useMutation({
     mutationFn: async (params: TokenParams) => {
-      if (!web3Provider) throw new Error("No wallet connected")
+      if (!walletClient || !publicClient || !address) {
+        throw new Error("Wallet not connected")
+      }
+
+      // Check if we're on the correct network
+      const chainId = await publicClient.getChainId()
+      console.log("Current chain ID:", chainId, "Expected:", HELIOS_NETWORK_ID)
+
+      if (chainId !== HELIOS_NETWORK_ID) {
+        throw new Error(
+          `Please switch to Helios network (Chain ID: ${HELIOS_NETWORK_ID})`
+        )
+      }
 
       try {
         // Ensure decimals is a valid number between 0 and 18
@@ -211,42 +240,58 @@ export const useCreateToken = () => {
 
         setFeedback({
           status: "primary",
-          message: "Token deployment in progress..."
+          message: "Preparing transaction..."
         })
 
-        // Create web3 contract instance
-        const contract = new web3Provider.eth.Contract(
-          precompileAbi,
-          PRECOMPILE_CONTRACT_ADDRESS
-        )
+        // Validate parameters before encoding
+        const name = params.name.trim()
+        const symbol = params.symbol.trim()
+        const denom = params.denom.trim()
 
-        // Prepare contract method call once to avoid redundant encoding
-        const contractMethod = contract.methods.createErc20(
-          params.name.trim(),
-          params.symbol.trim(),
-          params.denom.trim(),
-          totalSupplyWei.toString(),
-          decimals,
-          logoBase64
-        )
-
-        // Simulate the transaction first to check if it will succeed
-        let resultOfSimulation
-        try {
-          resultOfSimulation = await contractMethod.call({
-            from: address
-          })
-        } catch (error: any) {
-          if (error.message?.includes("circuit breaker")) {
-            throw new Error(
-              "Network is currently overloaded. Please try again in a few moments."
-            )
-          }
-          throw error
+        if (!name || !symbol || !denom) {
+          throw new Error("Name, symbol, and denom cannot be empty")
         }
 
-        if (!resultOfSimulation) {
-          throw new Error("Error during simulation, please try again later")
+        if (decimals < 0 || decimals > 18) {
+          throw new Error("Decimals must be between 0 and 18")
+        }
+
+        // Prepare the arguments with proper types
+        const args = [
+          name,
+          symbol,
+          denom,
+          totalSupplyWei,
+          decimals, // This should be uint8
+          logoBase64
+        ]
+
+        console.log("Function arguments:", {
+          name,
+          symbol,
+          denom,
+          totalSupply: totalSupplyWei.toString(),
+          decimals,
+          logoBase64Length: logoBase64.length
+        })
+
+        // Encode the function data
+        const data = encodeFunctionData({
+          abi: precompileAbi,
+          functionName: "createErc20",
+          args: args
+        })
+
+        console.log("Encoded data:", data)
+
+        // Check if the precompile contract exists
+        try {
+          const code = await publicClient.getCode({
+            address: PRECOMPILE_CONTRACT_ADDRESS as `0x${string}`
+          })
+          console.log("Precompile contract code:", code)
+        } catch (error) {
+          console.warn("Could not get precompile contract code:", error)
         }
 
         setFeedback({
@@ -254,99 +299,192 @@ export const useCreateToken = () => {
           message: "Estimating gas..."
         })
 
-        // Estimate the gas
+        // Estimate gas with better error handling and shorter timeout
         let gasEstimate
         try {
-          gasEstimate = await contractMethod.estimateGas({
-            from: address
+          console.log("Estimating gas with params:", {
+            account: address,
+            to: PRECOMPILE_CONTRACT_ADDRESS,
+            data: data
           })
+
+          // Use a shorter timeout for gas estimation to avoid long waits
+          const estimationPromise = publicClient.estimateGas({
+            account: address,
+            to: PRECOMPILE_CONTRACT_ADDRESS as `0x${string}`,
+            data: data
+          })
+
+          // Add a timeout wrapper
+          const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(
+              () => reject(new Error("Gas estimation timeout")),
+              10000000
+            ) // 10 second timeout
+          })
+
+          gasEstimate = (await Promise.race([
+            estimationPromise,
+            timeoutPromise
+          ])) as bigint
+          console.log("Gas estimate:", gasEstimate)
         } catch (error: any) {
+          console.warn(
+            "Gas estimation failed, using default gas limit:",
+            error.message
+          )
+
+          // Check for specific errors that should stop execution
+          if (error.message?.includes("denom metadata already registered")) {
+            throw new Error(
+              "Denom metadata already registered, choose a unique base denomination"
+            )
+          }
+
           if (error.message?.includes("circuit breaker")) {
             throw new Error(
               "Network is currently overloaded. Please try again in a few moments."
             )
           }
-          throw error
+
+          // Check for other validation errors that should stop execution
+          if (
+            error.message?.includes("name cannot be empty") ||
+            error.message?.includes("symbol cannot be empty") ||
+            error.message?.includes("denom cannot be empty") ||
+            error.message?.includes("cannot contain spaces") ||
+            error.message?.includes("length exceeds") ||
+            error.message?.includes("total supply must be greater than zero") ||
+            error.message?.includes("decimals cannot exceed")
+          ) {
+            // Extract the actual error message from the RPC error format
+            // Format: "rpc error: code = Unknown desc = actual error message: additional info"
+            const descMatch = error.message.match(/desc = (.+?):/)
+            if (descMatch) {
+              throw new Error(descMatch[1])
+            }
+
+            // Fallback: try to extract from other common error formats
+            const match = error.message.match(/execution reverted: (.+)/)
+            const actualError = match ? match[1] : error.message
+            throw new Error(actualError)
+          }
+
+          // Show user-friendly message for network issues
+          if (
+            error.message?.includes("timeout") ||
+            error.message?.includes("took too long")
+          ) {
+            setFeedback({
+              status: "primary",
+              message: "Network is slow, using estimated gas limit..."
+            })
+          } else if (error.message?.includes("Missing or invalid parameters")) {
+            // This can happen during gas estimation but the transaction might still work
+            setFeedback({
+              status: "primary",
+              message: "Using estimated gas limit..."
+            })
+          }
+
+          // Use a reasonable default gas limit for token creation if estimation fails
+          gasEstimate = BigInt(800000) // Increased default gas limit
+        }
+
+        // Add 20% buffer to gas estimate
+        const gasLimit = (gasEstimate * 120n) / 100n
+
+        // Small delay to let network stabilize if there were issues
+        if (gasEstimate === BigInt(800000)) {
+          await new Promise((resolve) => setTimeout(resolve, 1000))
         }
 
         setFeedback({
           status: "primary",
-          message: `Sending transaction...`
-        })
-
-        // Add 20% to the gas estimation to be safe
-        const gasLimit = (gasEstimate * 120n) / 100n
-
-        // Encode ABI once
-        const encodedData = contractMethod.encodeABI()
-
-        setFeedback({
-          status: "primary",
-          message: `Sending token deployment transaction...`
+          message: "Waiting for wallet confirmation..."
         })
 
         // Show toast before wallet confirmation
-        toast.info("Preparing transaction for wallet confirmation...")
+        toast.info("Please confirm the transaction in your wallet...")
 
-        // Send the transaction using the cleaner pattern
-        const receipt = await new Promise<TransactionReceipt>(
-          (resolve, reject) => {
-            web3Provider.eth
-              .sendTransaction({
-                from: address,
-                to: PRECOMPILE_CONTRACT_ADDRESS,
-                data: encodedData,
-                gas: gasLimit.toString()
-              })
-              .then((tx) => {
-                console.log("Token deployment tx hash:", tx.transactionHash)
-
-                // Show toast when transaction is submitted to network
-                toast.info(
-                  "Transaction submitted to network, waiting for confirmation..."
-                )
-
-                // Show toast with transaction hash
-                toast.info(
-                  `Transaction hash: ${tx.transactionHash.slice(0, 10)}...`,
-                  { duration: 5000 }
-                )
-
-                resolve(tx as any)
-              })
-              .catch((error) => {
-                console.log("Token deployment error:", error)
-                // Check if user cancelled the transaction
-                if (
-                  error.code === 4001 ||
-                  error.message?.includes("User rejected")
-                ) {
-                  reject(new Error("Transaction cancelled by user"))
-                } else {
-                  reject(error)
-                }
-              })
+        // Send the transaction with user rejection handling
+        let txHash
+        try {
+          txHash = await walletClient.sendTransaction({
+            account: address,
+            to: PRECOMPILE_CONTRACT_ADDRESS as `0x${string}`,
+            data: data,
+            gas: gasLimit
+          })
+        } catch (error: any) {
+          // Handle user rejection
+          if (
+            error.message?.includes("User rejected") ||
+            error.message?.includes("user rejected") ||
+            error.message?.includes("User denied") ||
+            error.message?.includes("user denied") ||
+            error.code === 4001 ||
+            error.code === "ACTION_REJECTED"
+          ) {
+            toast.error("User rejected the request")
+            throw new Error("User rejected the request")
           }
+          // Re-throw other errors
+          throw error
+        }
+
+        console.log("Token deployment tx hash:", txHash)
+
+        setFeedback({
+          status: "primary",
+          message: "Transaction submitted, waiting for confirmation..."
+        })
+
+        // Show toast when transaction is submitted
+        toast.info(
+          "Transaction submitted to network, waiting for confirmation..."
         )
+        // Wait for transaction receipt with longer timeout
+        const receipt = await publicClient.waitForTransactionReceipt({
+          hash: txHash,
+          timeout: 120000 // 2 minute timeout
+        })
 
-        // Extract the contract address from the receipt
-        const contractAddress = extractTokenAddressFromReceipt(receipt)
-
-        if (!contractAddress) {
+        // Check if transaction was successful
+        if (receipt.status === "reverted" || receipt.status === 0) {
+          // Most errors should have been caught during gas estimation
+          // This is a fallback for any remaining transaction failures
           throw new Error(
-            "Could not extract contract address from transaction receipt"
+            "Transaction failed. Please check your parameters and try again."
           )
         }
 
+        // Extract the contract address from the receipt
+        const contractAddress = extractTokenAddressFromReceipt(receipt as any)
+
+        if (!contractAddress) {
+          throw new Error(
+            "Failed to extract token address from transaction receipt"
+          )
+        }
+
+        setFeedback({
+          status: "success",
+          message: "Token deployed successfully!"
+        })
+
+        // Show success toast
+        toast.success("Token deployed successfully!")
+
         const deployedTokenData: DeployedToken = {
           address: contractAddress,
-          name: params.name,
-          symbol: params.symbol,
-          denom: params.denom,
+          name: params.name.trim(),
+          symbol: params.symbol.trim(),
+          denom: params.denom.trim(),
           totalSupply: params.totalSupply,
-          decimals: parseInt(params.decimals),
-          logoBase64: params.logoBase64 || "",
-          txHash: (receipt as any).transactionHash || (receipt as any).hash,
+          decimals: decimals,
+          logoBase64: logoBase64,
+          txHash: txHash,
           timestamp: Date.now()
         }
 
@@ -354,19 +492,49 @@ export const useCreateToken = () => {
 
         return { receipt, deployedToken: deployedTokenData }
       } catch (error: any) {
-        setFeedback({
-          status: "danger",
-          message: getErrorMessage(error) || "Error during token deployment"
-        })
+        console.error("Token deployment failed:", error)
+
+        // Don't show error feedback for user rejection
+        if (
+          error.message?.includes("User rejected") ||
+          error.message?.includes("user rejected") ||
+          error.message?.includes("User denied") ||
+          error.message?.includes("user denied")
+        ) {
+          setFeedback({
+            status: "primary",
+            message: ""
+          })
+        } else {
+          setFeedback({
+            status: "danger",
+            message: getErrorMessage(error) || "Error during token deployment"
+          })
+        }
+
         throw error
       }
     },
     onError: (error: any) => {
       console.error("Token deployment mutation error:", error)
-      setFeedback({
-        status: "danger",
-        message: getErrorMessage(error) || "Error during token deployment"
-      })
+
+      // Don't show error feedback for user rejection
+      if (
+        error.message?.includes("User rejected") ||
+        error.message?.includes("user rejected") ||
+        error.message?.includes("User denied") ||
+        error.message?.includes("user denied")
+      ) {
+        setFeedback({
+          status: "primary",
+          message: ""
+        })
+      } else {
+        setFeedback({
+          status: "danger",
+          message: getErrorMessage(error) || "Error during token deployment"
+        })
+      }
     }
   })
 
@@ -375,42 +543,25 @@ export const useCreateToken = () => {
 
     try {
       const result = await createTokenMutation.mutateAsync(params)
-
-      setFeedback({
-        status: "success",
-        message: `Token deployed successfully!`
-      })
-
-      toast.success("Token deployed successfully!")
-
-      // Refetch relevant queries if needed
-      await queryClient.refetchQueries({
-        queryKey: ["accountLastTxs", address]
-      })
-
       return result
-    } catch (error) {
-      // Error is already handled in the mutation, but we should still throw it
-      // so the UI component can handle it properly
+    } catch (error: any) {
       console.error("Token deployment failed:", error)
-      throw error // Re-throw the error instead of returning null
+      throw error
     }
   }
 
-  const reset = () => {
+  const reset = useCallback(() => {
     setDeployedToken(null)
     resetFeedback()
     createTokenMutation.reset()
-  }
+  }, [createTokenMutation])
 
   return {
     createToken,
     reset,
-    feedback,
-    resetFeedback,
     deployedToken,
     isLoading: createTokenMutation.isPending,
-    isSuccess: createTokenMutation.isSuccess,
+    feedback,
     error: createTokenMutation.error
   }
 }

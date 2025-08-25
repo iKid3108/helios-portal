@@ -431,7 +431,7 @@ export const TokenDeployerInterface = () => {
 
       {/* Success Modal */}
       <Modal
-        open={showSuccess && deployedToken && deployedToken.address}
+        open={Boolean(showSuccess && deployedToken && !!deployedToken.address)}
         onClose={() => {
           setShowSuccess(false)
         }}
