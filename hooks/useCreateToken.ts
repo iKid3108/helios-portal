@@ -296,8 +296,82 @@ export const useCreateToken = () => {
 
         setFeedback({
           status: "primary",
-          message: "Estimating gas... This may take up to 60 seconds."
+          message: "Simulating transaction..."
         })
+
+        toast.info("Simulating transaction to validate parameters...")
+
+        // Simulate the transaction first to catch errors early
+        try {
+          await publicClient.call({
+            account: address,
+            to: PRECOMPILE_CONTRACT_ADDRESS as `0x${string}`,
+            data: data
+          })
+          console.log("Transaction simulation successful")
+          toast.success("Transaction simulation successful!")
+        } catch (simulationError: any) {
+          console.warn(
+            "Transaction simulation failed:",
+            simulationError.message
+          )
+
+          // Check for specific errors that should stop execution
+          if (
+            simulationError.message?.includes(
+              "denom metadata already registered"
+            )
+          ) {
+            throw new Error(
+              "Denom metadata already registered, choose a unique base denomination"
+            )
+          }
+
+          if (simulationError.message?.includes("circuit breaker")) {
+            throw new Error(
+              "Network is currently overloaded. Please try again in a few moments."
+            )
+          }
+
+          // Check for other validation errors
+          if (
+            simulationError.message?.includes("name cannot be empty") ||
+            simulationError.message?.includes("symbol cannot be empty") ||
+            simulationError.message?.includes("denom cannot be empty") ||
+            simulationError.message?.includes("cannot contain spaces") ||
+            simulationError.message?.includes("length exceeds") ||
+            simulationError.message?.includes(
+              "total supply must be greater than zero"
+            ) ||
+            simulationError.message?.includes("decimals cannot exceed")
+          ) {
+            // Extract the actual error message from the RPC error format
+            const descMatch = simulationError.message.match(/desc = (.+?):/)
+            if (descMatch) {
+              throw new Error(descMatch[1])
+            }
+
+            // Fallback: try to extract from other common error formats
+            const match = simulationError.message.match(
+              /execution reverted: (.+)/
+            )
+            const actualError = match ? match[1] : simulationError.message
+            throw new Error(actualError)
+          }
+
+          // For other simulation errors, warn but continue with gas estimation
+          toast.warning("Simulation failed, proceeding with gas estimation...")
+          console.log(
+            "Continuing with gas estimation despite simulation failure"
+          )
+        }
+
+        setFeedback({
+          status: "primary",
+          message: "Estimating gas..."
+        })
+
+        toast.info("Estimating gas for token deployment...")
 
         // Estimate gas with better error handling and longer timeout for slow networks
         let gasEstimate
@@ -323,6 +397,7 @@ export const useCreateToken = () => {
               status: "primary",
               message: "Network is slow, still estimating gas... Please wait."
             })
+            toast.info("Network is slow, still estimating gas... Please wait.")
           }, 30000) // Show message after 30 seconds
 
           // Add a timeout wrapper with increased timeout for slow networks
@@ -338,6 +413,7 @@ export const useCreateToken = () => {
           // Clear the intermediate timeout since estimation completed
           if (intermediateTimeout) clearTimeout(intermediateTimeout)
           console.log("Gas estimate:", gasEstimate)
+          toast.success("Gas estimation completed successfully!")
         } catch (error: any) {
           // Clear the intermediate timeout in case of error
           if (intermediateTimeout) clearTimeout(intermediateTimeout)
@@ -346,41 +422,8 @@ export const useCreateToken = () => {
             error.message
           )
 
-          // Check for specific errors that should stop execution
-          if (error.message?.includes("denom metadata already registered")) {
-            throw new Error(
-              "Denom metadata already registered, choose a unique base denomination"
-            )
-          }
-
-          if (error.message?.includes("circuit breaker")) {
-            throw new Error(
-              "Network is currently overloaded. Please try again in a few moments."
-            )
-          }
-
-          // Check for other validation errors that should stop execution
-          if (
-            error.message?.includes("name cannot be empty") ||
-            error.message?.includes("symbol cannot be empty") ||
-            error.message?.includes("denom cannot be empty") ||
-            error.message?.includes("cannot contain spaces") ||
-            error.message?.includes("length exceeds") ||
-            error.message?.includes("total supply must be greater than zero") ||
-            error.message?.includes("decimals cannot exceed")
-          ) {
-            // Extract the actual error message from the RPC error format
-            // Format: "rpc error: code = Unknown desc = actual error message: additional info"
-            const descMatch = error.message.match(/desc = (.+?):/)
-            if (descMatch) {
-              throw new Error(descMatch[1])
-            }
-
-            // Fallback: try to extract from other common error formats
-            const match = error.message.match(/execution reverted: (.+)/)
-            const actualError = match ? match[1] : error.message
-            throw new Error(actualError)
-          }
+          // Most validation errors should have been caught during simulation
+          // Only handle network-specific errors here
 
           // Show user-friendly message for network issues
           if (
@@ -391,12 +434,14 @@ export const useCreateToken = () => {
               status: "primary",
               message: "Network is slow, using estimated gas limit..."
             })
+            toast.warning("Network is slow...")
           } else if (error.message?.includes("Missing or invalid parameters")) {
             // This can happen during gas estimation but the transaction might still work
             setFeedback({
               status: "primary",
               message: "Using estimated gas limit..."
             })
+            toast.info("Using estimated gas limit...")
           }
 
           // Use a reasonable default gas limit for token creation if estimation fails
@@ -408,6 +453,9 @@ export const useCreateToken = () => {
 
         // Small delay to let network stabilize if there were issues
         if (gasEstimate === BigInt(800000)) {
+          toast.info(
+            "Proceeding with default gas limit due to network issues..."
+          )
           await new Promise((resolve) => setTimeout(resolve, 1000))
         }
 
@@ -438,7 +486,6 @@ export const useCreateToken = () => {
             error.code === 4001 ||
             error.code === "ACTION_REJECTED"
           ) {
-            toast.error("User rejected the request")
             throw new Error("User rejected the request")
           }
           // Re-throw other errors
@@ -463,13 +510,15 @@ export const useCreateToken = () => {
         })
 
         // Check if transaction was successful
-        if (receipt.status === "reverted" || receipt.status === 0) {
+        if (receipt.status === "reverted" || Number(receipt.status) === 0) {
           // Most errors should have been caught during gas estimation
           // This is a fallback for any remaining transaction failures
           throw new Error(
             "Transaction failed. Please check your parameters and try again."
           )
         }
+
+        toast.success("Transaction confirmed! Processing token deployment...")
 
         // Extract the contract address from the receipt
         const contractAddress = extractTokenAddressFromReceipt(receipt as any)
