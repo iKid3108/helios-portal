@@ -7,6 +7,8 @@ import { APP_COLOR_SECONDARY } from "@/config/app"
 import { formatCurrency } from "@/lib/utils/number"
 import s from "./portfolio.module.scss"
 import { usePortfolioInfo } from "@/hooks/usePortfolioInfo"
+import { addTokenToWallet } from "@/utils/wallet"
+import { TokenExtended } from "@/types/token"
 import Image from "next/image"
 
 interface LineProps {
@@ -16,11 +18,26 @@ interface LineProps {
   symbolIcon: React.ReactNode
   price: number
   amount?: string
+  token?: TokenExtended
 }
 
-const Line = ({ name, logo, symbol, symbolIcon, price, amount }: LineProps) => {
+const Line = ({
+  name,
+  logo,
+  symbol,
+  symbolIcon,
+  price,
+  amount,
+  token
+}: LineProps) => {
   // const percent = (price / totalPriceUsd) * 100
   const amountFixed = amount ? parseFloat(amount).toFixed(4) : 0
+
+  const handleAddToWallet = () => {
+    if (token) {
+      addTokenToWallet(token)
+    }
+  }
 
   return (
     <li>
@@ -38,6 +55,15 @@ const Line = ({ name, logo, symbol, symbolIcon, price, amount }: LineProps) => {
         {price !== 0 && <div className={s.bottom}>{formatCurrency(price)}</div>}
         {/* <div className={s.bottom}>{percent.toFixed(2)}%</div> */}
       </div>
+      {token && (
+        <button
+          onClick={handleAddToWallet}
+          className={s.addToWallet}
+          title={`Add ${symbol} to wallet`}
+        >
+          <Icon icon="hugeicons:plus-sign" />
+        </button>
+      )}
     </li>
   )
 }
@@ -74,6 +100,7 @@ export const PortfolioTokens = () => {
           amount={token.balance.amount.toString()}
           name={token.display.name}
           price={token.balance.totalPrice || 0}
+          token={token}
         />
       ))}
       {tokens.length > 3 && (
