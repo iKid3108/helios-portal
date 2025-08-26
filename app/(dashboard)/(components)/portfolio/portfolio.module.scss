@@ -167,3 +167,33 @@
     color: var(--text-tertiary);
   }
 }
+
+.addToWallet {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2em;
+  height: 2em;
+  border: none;
+  border-radius: 50%;
+  background: var(--primary-medium);
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-left: calc(var(--card-padding) / 3);
+  flex-shrink: 0;
+
+  &:hover {
+    background: var(--primary-medium);
+    transform: scale(1.05);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  svg {
+    width: 1em;
+    height: 1em;
+  }
+}
